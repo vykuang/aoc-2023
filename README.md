@@ -48,7 +48,7 @@ Contraints:
 
 ### d2 part 1
 
-Check each set vs our constraint? 
+Check each set vs our constraint?
 
 - for each game
 - for each set
@@ -56,3 +56,21 @@ Check each set vs our constraint?
 - compare with our constraint
 - if any one set does not match, mark as not possible
 - else add game ID to total
+
+Compare with constraints:
+
+- collect counts by color for each game_id
+- compare the max with our constraint
+- if none surpass constraint, then add game_id to total
+
+### d2 part 2
+
+what is the *fewest number of cubes of each color* that make the games possible?
+
+- collect the max for each set, from each game
+- get the product of the maximums
+- sum the products
+
+## day 3
+
+Given a schematic of numbers, periods, and symbols, find all numbers adjacent (even diagonally) to a symbol, not including periods. Sum those numbers
