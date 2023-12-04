@@ -24,3 +24,35 @@ r.span()[0] # 4
 ```
 
 Obtaining the `start` allows us to replace the *first* and *last* occurring string digit
+
+Missing calibration: `sevenine`, if that is the whole string, should parse to `79`. This means using **positive lookahead** assertion, so that our tokens are not consumed during match; we need to save the `n` for `nine` to be captured as well.
+
+Use this regex pattern: `?=(one|two|...|nine)`
+
+## day 2
+
+- bag with cubes
+    - r/g/b
+- find number of cubes, after the elf hides a secret number
+- `game id: a blue, b red; c red, d green, e blue; f green`
+- three sets are revealed in that game record
+- each set is semicolon separated
+- given list of game records, and known number of cubes of each colour, find which games are possible
+- sum the game IDs of possible games
+
+Contraints:
+
+- 12 red
+- 13 green
+- 14 blue
+
+### d2 part 1
+
+Check each set vs our constraint? 
+
+- for each game
+- for each set
+- parse each set to get the number of r/g/b
+- compare with our constraint
+- if any one set does not match, mark as not possible
+- else add game ID to total
