@@ -57,7 +57,6 @@ def main(sample: bool, part_two: bool, loglevel: str):
                         total += int(n.group(0))
                         # move on to next num
                         break
-            next
         else:
             nums = prog_num.finditer(n_1)
             sym_abv = list(prog_sym.finditer(n_2))
