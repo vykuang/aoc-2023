@@ -74,4 +74,25 @@ what is the *fewest number of cubes of each color* that make the games possible?
 ## day 3
 
 Given a schematic of numbers, periods, and symbols, find all numbers adjacent (even diagonally) to a symbol, not including periods. Sum those numbers
->>>>>>> refs/remotes/origin/main
+
+- Rolling window of 3 rows; for each row, consider also the one above and below, if applicable
+- scan each line
+- look for `\d+`
+- detection of numbers triggers scanning for symbols
+    - e.g. when 467 is found on row 0 col 0, with `re.finditer` so that it also returns the position, as opposed to `re.findall` which only returns the string, we get `span=(0, 3)`
+    - using this span, we look for symbols in this range:
+    - row n-1: -1 to 3
+    - row n: -1 **and** 3
+    - row n+1 -1 to 3
+- symbol detection will collect the range, and search for all symbols
+- handle first line as edge case
+    - use current as the *look ahead*
+- how to handle last line?
+
+Or would it be easier to search for symbols instead, then check for numbers surrounding the symbol? This ensure all numbers found are valid, but requires uniqueness check
+
+*OR*
+
+- sum all numbers
+- find all numbers only surrounded by periods, i.e. *not adjacent to any symbols*
+- subtract that from total sum to get the answer
