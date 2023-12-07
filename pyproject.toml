@@ -13,8 +13,8 @@ requests = "^2.31.0"
 pre-commit = "^3.5.0"
 
 [tool.ruff]
-# skip unused variable rule
-ignore = ["F841"]
+# skip unused variable rule, undefined name '_'
+ignore = ["F841", "F821"]
 
 [build-system]
 requires = ["poetry-core"]

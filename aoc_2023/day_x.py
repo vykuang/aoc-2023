@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import argparse
-import re
 import logging
 import sys
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+
 
 def read_line(fpath: str):
     """Reads the input and yields each line"""
@@ -14,9 +14,9 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
+
 def main(sample: bool, part_two: bool, loglevel: str):
-    """
-    """
+    """ """
     logger.setLevel(loglevel)
     if not sample:
         fp = "input.txt"
@@ -25,7 +25,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
     else:
         fp = "sample.txt"
     logger.debug(f"loglevel: {loglevel}")
-    logger.debug(f"Using {fp}")
+    logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

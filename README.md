@@ -1,12 +1,14 @@
 # Advent of code 2023
 
-## day 1 p1
+## day 1
+
+### day 1p1
 
 check if each char is numeric from left to right; break once we find it.
 
 To find the last one, reverse the char order in the line
 
-## day 1 p2
+### day 1 p2
 
 Wholesale replacement is invalidated by `eightwothree`; the order in which we replace the string becomes critical, and wholesale replacement cannot account for that.
 
@@ -112,3 +114,51 @@ this necessitates switching our approach to look for symbols instead of searchin
     - any `\d+` with start *or* stop between `c-1` and `c+1`, in rows `r - 1` and `r + 1`
     - any `\d+` with stop at `c-1` or start at `c+1`
 - multiply the two if found
+- small but important distinction on our adjacency check:
+
+```py
+adj_part = [
+    int(num.group(0))
+    for num in nums
+    if (num.start() - 1 <= gear.start() <= num.end())
+]
+```
+
+- checks whether our singular `*` is within the adjacency bounds of our numbers instead
+
+## day 4
+
+### d4 part 1
+
+simple parsing and list comprehension
+
+### d4 part 2
+
+the puzzle description is a trip.
+
+- number of matches in a card now generates that same number of cards, following the card number
+- we now want to calculate total number of cards we end up with
+    - no longer need to take `power(2, num_common)`
+- count matches per card, same as part 1
+    - keep a dict: `{card_id: num_common}`
+- key is `card_id`
+- given the `match_dict`, iterate through each card_id,
+- add `match_dict[new_card]` to total count for each `new_card` won
+- update based on card count
+
+```py
+# nested comprehension with unpacking assignment
+match_dict = {
+    cid: dict(matches=num_common, count=1)
+    for cid, num_common in
+    [count_common_num(line) for line in read_line(fp)]
+}
+
+# alt that checks for None from count
+match_dict = {
+    cid: dict(matches=num_common, count=1)
+    for cid, num_common in
+    (result for result in (count_common_num(line)
+    for line in read_line(fp)) if result is not None)
+}
+```
