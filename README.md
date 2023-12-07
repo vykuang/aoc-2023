@@ -96,3 +96,19 @@ Or would it be easier to search for symbols instead, then check for numbers surr
 - sum all numbers
 - find all numbers only surrounded by periods, i.e. *not adjacent to any symbols*
 - subtract that from total sum to get the answer
+
+### d3 part 2
+
+- gear: any `*` adjacent to exactly two part numbers
+- ratio: prod of those two numbers
+- find the sum of all gear ratios
+
+this necessitates switching our approach to look for symbols instead of searching for symbols around numbers
+
+- keep using a 3-line rolling window, with empty newline appended to input
+- search for `*`
+- use the same principles but now we check the start/stop of the numbers vs the position of our `*`
+    - given a `*` at position `c` on row `r`, check the following
+    - any `\d+` with start *or* stop between `c-1` and `c+1`, in rows `r - 1` and `r + 1`
+    - any `\d+` with stop at `c-1` or start at `c+1`
+- multiply the two if found
