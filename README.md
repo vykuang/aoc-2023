@@ -188,3 +188,109 @@ So we could iterate through the maps and create a single map with which to look 
 - for each subsequent map, update the `dest_loc` if `dest_loc` shows up in the new map's `src_loc`
     - does this require reverse lookup?
     -
+- alt. jump through each dicts for each seed
+- `seed-to-soil` dict be a nested dict:
+
+    ```py
+    seed_map['seed'] = {'dest': 'soil', 'path': {src0: dest0, src1: dest1, ..., srcn: destn}}
+    ```
+- lookup for each initial seed will look like
+
+    ```py
+    seed_loc = [s0, s1, ..., sn]
+    for seed in seed_loc:
+        new_loc = loc if (loc := seed_map['seed'].get(seed)) else seed
+
+### non-naive approach
+
+let's apply some basic heuristics
+
+given `src = 98`, `dest = 50`, `rng = 2`, and a seed of `99`, we might do the following
+
+- check if our seed falls within range of `[src, src + rng)` (notice the incl/excl bracket/parenthesis)
+- if no, we do not apply mapping
+- if yes, apply mapping
+    - define `mapping = dest - src`, then `new_loc = loc + mapping`
+    - `new_loc = 99 + 50 - 98 = 51`
+- do we need to keep track of remapped location that are initially not used?
+    - no we only need to know where our seeds are
+
+#### Algorithm
+
+- parse seeds
+- skip all lines that are not map entries
+- for each `map_entry`, iterate through seeds to get new loc
+
+I missed the part where each record for "map" is unique, in that I should only apply the mapping once for `src-to-dest` map. I should not apply all the mappings to each seed in a single map.
+
+- collect all the entries for a given map
+- send to `apply_mapping` as a collection of entries
+- check which entries are applicable to our seeds before relocating
+
+### part 2
+
+--- Part Two ---
+
+Everyone will starve if you only plant such a small number of seeds. Re-reading the almanac, it looks like the seeds: line actually describes ranges of seed numbers.
+
+The values on the initial seeds: line come in pairs. Within each pair, the first value is the start of the range and the second value is the length of the range. So, in the first line of the example above:
+
+seeds: 79 14 55 13
+
+This line describes two ranges of seed numbers to be planted in the garden. The first range starts with seed number 79 and contains 14 values: 79, 80, ..., 91, 92. The second range starts with seed number 55 and contains 13 values: 55, 56, ..., 66, 67.
+
+Now, rather than considering four seed numbers, you need to consider a total of 27 seed numbers.
+
+In the above example, the lowest location number can be obtained from seed number 82, which corresponds to soil 84, fertilizer 84, water 84, light 77, temperature 45, humidity 46, and location 46. So, the lowest location number is 46.
+
+Consider all of the initial seed numbers listed in the ranges on the first line of the almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
+
+## day 6
+
+### part 1
+
+--- Day 6: Wait For It ---
+
+The ferry quickly brings you across Island Island. After asking around, you discover that there is indeed normally a large pile of sand somewhere near here, but you don't see anything besides lots of water and the small island where the ferry has docked.
+
+As you try to figure out what to do next, you notice a poster on a wall near the ferry dock. "Boat races! Open to the public! Grand prize is an all-expenses-paid trip to Desert Island!" That must be where the sand comes from! Best of all, the boat races are starting in just a few minutes.
+
+You manage to sign up as a competitor in the boat races just in time. The organizer explains that it's not really a traditional race - instead, you will get a fixed amount of time during which your boat has to travel as far as it can, and you win if your boat goes the farthest.
+
+As part of signing up, you get a sheet of paper (your puzzle input) that lists the time allowed for each race and also the best distance ever recorded in that race. To guarantee you win the grand prize, you need to make sure you go farther in each race than the current record holder.
+
+The organizer brings you over to the area where the boat races are held. The boats are much smaller than you expected - they're actually toy boats, each with a big button on top. Holding down the button charges the boat, and releasing the button allows the boat to move. Boats move faster if their button was held longer, but time spent holding the button counts against the total race time. You can only hold the button at the start of the race, and boats don't move until the button is released.
+
+For example:
+
+Time:      7  15   30
+Distance:  9  40  200
+
+This document describes three races:
+
+    The first race lasts 7 milliseconds. The record distance in this race is 9 millimeters.
+    The second race lasts 15 milliseconds. The record distance in this race is 40 millimeters.
+    The third race lasts 30 milliseconds. The record distance in this race is 200 millimeters.
+
+Your toy boat has a starting speed of zero millimeters per millisecond. For each whole millisecond you spend at the beginning of the race holding down the button, the boat's speed increases by one millimeter per millisecond.
+
+So, because the first race lasts 7 milliseconds, you only have a few options:
+
+    Don't hold the button at all (that is, hold it for 0 milliseconds) at the start of the race. The boat won't move; it will have traveled 0 millimeters by the end of the race.
+    Hold the button for 1 millisecond at the start of the race. Then, the boat will travel at a speed of 1 millimeter per millisecond for 6 milliseconds, reaching a total distance traveled of 6 millimeters.
+    Hold the button for 2 milliseconds, giving the boat a speed of 2 millimeters per millisecond. It will then get 5 milliseconds to move, reaching a total distance of 10 millimeters.
+    Hold the button for 3 milliseconds. After its remaining 4 milliseconds of travel time, the boat will have gone 12 millimeters.
+    Hold the button for 4 milliseconds. After its remaining 3 milliseconds of travel time, the boat will have gone 12 millimeters.
+    Hold the button for 5 milliseconds, causing the boat to travel a total of 10 millimeters.
+    Hold the button for 6 milliseconds, causing the boat to travel a total of 6 millimeters.
+    Hold the button for 7 milliseconds. That's the entire duration of the race. You never let go of the button. The boat can't move until you let go of the button. Please make sure you let go of the button so the boat gets to move. 0 millimeters.
+
+Since the current record for this race is 9 millimeters, there are actually 4 different ways you could win: you could hold the button for 2, 3, 4, or 5 milliseconds at the start of the race.
+
+In the second race, you could hold the button for at least 4 milliseconds and at most 11 milliseconds and beat the record, a total of 8 different ways to win.
+
+In the third race, you could hold the button for at least 11 milliseconds and no more than 19 milliseconds and still beat the record, a total of 9 ways you could win.
+
+To see how much margin of error you have, determine the number of ways you can beat the record in each race; in this example, if you multiply these values together, you get 288 (4 * 8 * 9).
+
+Determine the number of ways you could beat the record in each race. What do you get if you multiply these numbers together?
