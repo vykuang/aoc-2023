@@ -162,3 +162,29 @@ match_dict = {
     for line in read_line(fp)) if result is not None)
 }
 ```
+
+## day 5
+
+### d5 part 1
+
+problem description is also wild.
+
+Begin with a list of seeds
+
+Input includes a series of maps describing where to plant the seeds. The last of the series arrive at `location`
+
+Each map is a list of 3-tuples: (`dest_start`, `src_start`, `len`). Given `seed-to-soil` of `50 98 2', this maps seeds `98, 99` to soil `50, 51`. Once we decipher all the maps, we start with our initial seed numbers and follow through the maze. If any `src` numbers were not mapped to a `dest`, it remains the same number
+
+Find the lowest location number corresponding to *any* of the initial seed numbers.
+
+So we could iterate through the maps and create a single map with which to look up our initial seed numbers:
+
+- take a map
+- note the `src` and `dest` in map names
+- populate a `dict={src_loc: dest_loc}` based on each entry in the map
+- combine dicts from each line for an overall dict representing the map
+- in parallel, create a linked list in a dict representing the direction of the maps, i.e. `map_link = {seed: soil, soil: fertilizer, fertilizer: water, ...}`
+    - aka a directed acyclic graph
+- for each subsequent map, update the `dest_loc` if `dest_loc` shows up in the new map's `src_loc`
+    - does this require reverse lookup?
+    -
