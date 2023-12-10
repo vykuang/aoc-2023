@@ -229,21 +229,29 @@ I missed the part where each record for "map" is unique, in that I should only a
 
 ### part 2
 
---- Part Two ---
+- Consider seed start and range
+- consider each mapping
+- if mapping applies, move the start
+- depending on the mapping and range, break off new seed start/range to check against mapping
+- repeat for each mapping
+- repeat for each seed
+- repeat for each set of map
 
-Everyone will starve if you only plant such a small number of seeds. Re-reading the almanac, it looks like the seeds: line actually describes ranges of seed numbers.
+#### solution
 
-The values on the initial seeds: line come in pairs. Within each pair, the first value is the start of the range and the second value is the length of the range. So, in the first line of the example above:
+we're working with ranges now for seeds as well. Difference is that we have to check which parts of the seed range apply to which entry in the mapping
 
-seeds: 79 14 55 13
-
-This line describes two ranges of seed numbers to be planted in the garden. The first range starts with seed number 79 and contains 14 values: 79, 80, ..., 91, 92. The second range starts with seed number 55 and contains 13 values: 55, 56, ..., 66, 67.
-
-Now, rather than considering four seed numbers, you need to consider a total of 27 seed numbers.
-
-In the above example, the lowest location number can be obtained from seed number 82, which corresponds to soil 84, fertilizer 84, water 84, light 77, temperature 45, humidity 46, and location 46. So, the lowest location number is 46.
-
-Consider all of the initial seed numbers listed in the ranges on the first line of the almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
+for one seed, we check that one loc against all the entries of a map. For a range of seeds we compare a range against a range. e.g. given (79, 14), and a map range of (70, 20), only seed locs from 79-89 will be affected.
+    - determine relevant range using intersections of `[start, start+len)`
+        - `[i_start, i_rng) = if (rng_start <= seed_start < rng_start + rng):
+    - calculate the new range first:
+        - i_start = max(s_start, start)
+        - i_end = min(s_end, end)
+    - if `i_start > i_end`, then the intersection does not actually exist and we do not apply this mapping
+    - if not, intersection exists and we apply to `[i_start, i_end]
+    - if there are remaining seed blocks, we treat this as another set of seeds, since they have been separated from the earlier block.
+        - append this block to the end of our seed list, and check for mappings accordingly
+- side note, approaching this problem from reverse doesn't seem that feasible given not all the mappings always apply; following mappings backwards will miss seeds where no mappings were applicable
 
 ## day 6
 
@@ -294,3 +302,8 @@ In the third race, you could hold the button for at least 11 milliseconds and no
 To see how much margin of error you have, determine the number of ways you can beat the record in each race; in this example, if you multiply these values together, you get 288 (4 * 8 * 9).
 
 Determine the number of ways you could beat the record in each race. What do you get if you multiply these numbers together?
+
+### input
+
+Time:        53     71     78     80
+Distance:   275   1181   1215   1524

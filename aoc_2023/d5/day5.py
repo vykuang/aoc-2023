@@ -8,6 +8,9 @@ from collections import namedtuple
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
+Mapping = namedtuple("Mapping", ["dest_start", "src_start", "rng"])
+Seed = namedtuple("Seed", ["start", "rng"])
+
 
 def read_line(fpath: str):
     """Reads the input and yields each line"""
@@ -52,17 +55,6 @@ def gen_seed_map(fpath: str):
     return seed_map
 
 
-def apply_mapping(mappings, seed):
-    """
-    given src, dest, rng, and seed, return the new seed loc, if changed
-    """
-    for m in mappings:
-        if m.src_start <= seed < m.src_start + m.rng:
-            return seed + m.dest_start - m.src_start
-    # unchanged if no mappings match
-    return seed
-
-
 def seed_loc_traverse(
     inits: list[int], seed_map: dict, src: str = "seed", end: str = "location"
 ):
@@ -80,6 +72,69 @@ def seed_loc_traverse(
     return seeds
 
 
+def apply_mapping(mappings, seed):
+    """
+    given src, dest, rng, and seed, return the new seed loc, if changed
+    """
+    for m in mappings:
+        if m.src_start <= seed < m.src_start + m.rng:
+            return seed + m.dest_start - m.src_start
+    # unchanged if no mappings match
+    return seed
+
+
+def apply_range_mapping(mappings: dict, seeds: set[namedtuple]):
+    """ """
+    new_seeds = set()
+    # while loop allows appending to `seeds`
+    while seeds:
+        seed = seeds.pop()
+        matching_mapping = None
+        logger.debug(f"seed_start: {seed.start}\trange: {seed.rng}")
+        for m in mappings:
+            logger.debug(f"eval mapping: {m}")
+            # process until exhausted, since new seeds are added
+            i_start = max(m.src_start, seed.start)
+            # i_end = i_start + rng; not part of actual range
+            i_end = min(m.src_start + m.rng, seed.start + seed.rng)
+            logger.debug(f"istart: {i_start}\tiend: {i_end}")
+            if i_start < i_end:
+                # intersection exists; process the applicable seeds
+                logger.debug(f"intersection: [{i_start}, {i_end})")
+                new_start = i_start + m.dest_start - m.src_start
+                new_rng = i_end - i_start
+                new_seeds.add(Seed(new_start, new_rng))
+                # append remaining block that was not processed
+                # alt block:
+                # if seed.start < i_start or seed.start + seed.rng > i_end:
+                #     new_rng = seed.start + seed.rng - (i_end if i_start > seed.start else i_start)
+                #     seeds.add(Seed(i_end if i_start > seed.start else seed.start, new_rng))
+
+                if seed.start >= i_start and seed.start + seed.rng <= i_end:
+                    # seed entirely within map range
+                    logger.debug("seed within map; no new seed blocks")
+                    next
+                elif i_start > seed.start:
+                    # break off lower portion for map recheck
+                    new_rng = i_start - seed.start - 1
+                    seeds.add(Seed(seed.start, new_rng))
+                    logger.debug(
+                        f"lower portion added to set: ({seed.start}, {new_rng})"
+                    )
+                else:
+                    # break off higher portion
+                    new_rng = seed.start + seed.rng - i_end
+                    seeds.add(Seed(i_end, new_rng))
+                    logger.debug(f"upper portion added to set: ({i_end}, {new_rng})")
+                # no longer need to check other mapping; move onto next seed
+                matching_mapping = m
+                break
+        if not matching_mapping:
+            # no intersection; add back to seeds list as is
+            new_seeds.add(seed)
+    return new_seeds
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
@@ -92,18 +147,38 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
-    Mapping = namedtuple("Mapping", ["dest_start", "src_start", "rng"])
     mappings = []
     for line in read_line(fp):
+        logger.debug(f"line: {line}")
         match line.split():
             case ["seeds:", *seeds]:
-                seeds = [int(seed) for seed in seeds]
+                seeds = [int(seed_loc) for seed_loc in seeds]
+                logger.debug(f"int seeds: {seeds}")
+                if part_two:
+                    # make into pairs of (start, range)
+                    # s_rngs = [rng for i, rng in enumerate(seeds) if (i % 2)]
+                    # s_starts = [seed for i, seed in enumerate(seeds) if not (i % 2)]
+                    # seeds = set([Seed(start, rng) for start, rng in zip(s_starts, s_rngs)])
+                    seeds = {
+                        Seed(seeds[i], seeds[i + 1]) for i in range(0, len(seeds), 2)
+                    }
                 logger.debug(f"inits: {seeds}")
-            case [_, "map:"]:
+            case [map_ids, "map:"]:
                 # apply mappings for previous map, if exists
                 if mappings:
-                    seeds = [apply_mapping(mappings, seed) for seed in seeds]
+                    logger.info(f"applying map from {map_src} to {map_dest}")
+                    # if part_two:
+                    #     seeds = apply_range_mapping(mappings, seeds)
+                    # else:
+                    #     seeds = [apply_mapping(mappings, seed) for seed in seeds]
+                    seeds = (
+                        apply_range_mapping(mappings, seeds)
+                        if part_two
+                        else [apply_mapping(mappings, seed) for seed in seeds]
+                    )
+
                 # reset our mapping
+                map_src, _, map_dest = map_ids.split("-")
                 mappings = []
             case []:
                 #     # needed to use two different 'case' to match either `map:`
@@ -114,13 +189,14 @@ def main(sample: bool, part_two: bool, loglevel: str):
                 logger.debug(f"map entry line: {line}")
                 # dest, src, rng
                 m = Mapping(*[int(num) for num in line.split()])
-                logger.debug(f"mapping: {m}")
                 mappings.append(m)
-                # seeds = [apply_mapping(src_start, dest_start, rng, seed) for seed in seeds]
     # handle last case
-    seeds = [apply_mapping(mappings, seed) for seed in seeds]
+    if part_two:
+        seeds = apply_range_mapping(mappings, seeds)
+    else:
+        seeds = [apply_mapping(mappings, seed) for seed in seeds]
     logger.info(f"new locs: {seeds}")
-    logger.info(f"minimum: {min(seeds)}")
+    logger.info(f"minimum: {min(seeds, key=lambda s: s[0])}")
     # pprint(seed_map)
 
 
