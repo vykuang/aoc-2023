@@ -2,7 +2,7 @@
 
 ## day 1
 
-### day 1p1
+### day 1 p1
 
 check if each char is numeric from left to right; break once we find it.
 
@@ -303,7 +303,13 @@ To see how much margin of error you have, determine the number of ways you can b
 
 Determine the number of ways you could beat the record in each race. What do you get if you multiply these numbers together?
 
-### input
+### problem considerations
 
-Time:        53     71     78     80
-Distance:   275   1181   1215   1524
+- number of different scenarios: however much time we're allotted, plus 1:
+    - given sample time of 7 ms, we have 8 scenarios, one for each duration of time we charge the boat, including zero
+- realistically we don't consider those times since the boat will not move for either, so we have n_realistic = t_alloted - 1
+- given t_alloted, if we charge for `t_charge`, the boat will travel at `v = t_charge` for `t_allotted - t_charge`
+- `d = v * t = t_charge * (t_allotted - t_charge) = t_a * t_c - t_c^2`- as suspected we have a downward parabola
+- given the distance to beat is `9`, question can be framed as how many `t_charge` satisfies `t_a * t_c - t_c^2 > d_record` or `-t_c^2 + t_a * t_c - d > 0`?
+- solve the quadratic roots. given roots `x0`, `x1`, then `n_soln = abs(x1 - x0) - 1`
+- in the example, we solve for the quadratic $-t^2 + 7t - 9 = 0$- $t^2 - 7t + 9 = 0$
