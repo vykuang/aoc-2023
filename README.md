@@ -271,3 +271,49 @@ for one seed, we check that one loc against all the entries of a map. For a rang
 turns out instead of multiple races, there's just one race. one time, and one distance to beat. take out the spaces between the supposed *different* races.
 
 Bigger number, but our approach still works.
+
+## day 7 - poker hands
+
+given a column of poker hands, along with a column of bid amounts, find the rank of those hands, 1 being lowest, multiply by their bid, then sum to find the answer
+
+### problem considerations
+
+- how to compare between `A` and `9`, or `A` and `K`?
+    - use custom func for comparison?
+- how to compare different poker hands?
+    - first, define the poker hands
+    - count the char in hands
+    - iterate through the hand, and collect cards as dict keys, count as values
+    - better yet use `collections.Counter`, subclass of dict
+    - `Counter('22333')` already counts everything
+    - check for `.values()`
+        - if len(c.keys()) == 2, check for 4-of-a-kind or full house
+            - 4: if 4 in c.values()
+            - else: full house
+        - elif 3 in c.values(): 3-of-a-kind
+        - elif len(c.keys()) == 3: 2 pairs
+        - elif len(c.keys()) == 4: 1 pair
+        - else: high card
+- sort
+    - after defining hand type and card type, we need to sort all the hands to get the overall hand rank
+    - define a func that returns 1, 0, or -1 depending on a > b, a = b, or a < b
+    - use `functools.cmp_to_key` and `sorted`
+
+### part 2 - jokers
+
+`J` now act as wild cards that act as whichever card makes the strongest hands. Individually they act as the weakest, lower than 2
+
+This changes the following
+
+- hand eval: `J` now counts towards whichever card has the highest counter
+    - in case of two pairs, it doesn't matter which one, since the tie-breaker will go to individual card comparison
+    - in case `J` is the most common, donate to the next most common
+    - `del hand['J']` afterwards
+- card eval: change `J` to `1`
+- edge case: if all cards are jokers, do not change the hand
+
+If we considered all poker hands, i.e. straights, flushes, etc. this would be much more tedious
+
+## day 8
+
+### part 1 - left-right pathfinding
