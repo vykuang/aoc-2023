@@ -317,3 +317,5 @@ If we considered all poker hands, i.e. straights, flushes, etc. this would be mu
 ## day 8
 
 ### part 1 - left-right pathfinding
+
+So the directions are already listed at the top of the input; we're meant to follow them, starting with `AAA`. To follow the nodes, we look at the two nodes after `=`, and select the left or the right one
