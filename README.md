@@ -319,3 +319,26 @@ If we considered all poker hands, i.e. straights, flushes, etc. this would be mu
 ### part 1 - left-right pathfinding
 
 So the directions are already listed at the top of the input; we're meant to follow them, starting with `AAA`. To follow the nodes, we look at the two nodes after `=`, and select the left or the right one
+
+use `itertools.cycle` to create an indefinite loop over the finite `dirs` given
+
+```py
+dirs = 'LRL'
+dir_cycle = cycle(dirs)
+while True:
+    new_dir = next(dir_cycle)
+```
+
+### part 2 - ghosts
+
+start from all nodes that end with `A`, and stop when all nodes end with `Z`
+
+For each node that starts with `A`, count how many cycles it takes to land on something with `Z`. Given the cycles for all nodes, find the LCM to determine number of cycles it takes for *all* routes to end on `Z`s
+
+This assumes perhaps very naively that all routes encounter only one node that end with `Z`
+
+## day 9 - nth differences
+
+### polynomial
+
+Each line is a series of points on some nth degree polynomial curve. Using those points, determine the next point
