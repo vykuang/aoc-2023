@@ -23,6 +23,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
     -: straights
     .: ground
     S: start
+    Given pos_s, search each cardinal dir
+    for each dir, look for a compatible pipe, given current pipe
     """
 
     logger.setLevel(loglevel)
@@ -33,16 +35,18 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
+    pipe_open = dict(
+        h=["east", "west"],
+        v=["north", "south"],
+        # insert rest of pipe shapes
+    )
+    compatible = dict(
+        north=["v", "7", "F"],
+        east=["h", "7", "J"],
+        south=["v", "J", "L"],
+        west=["h", "F", "L"],
+    )
     pipe_map = read_line(fp)
-    # find 'S' pos
-    # pipes could only connect n/e/s/w, so check the 4 adj squares
-    # -: - on east/west; F, L on west only, 7, J on east only
-    # |: | on north/south; J, L on south only, F, 7 on north only
-    # F: east/south; -, 7, J on east, J, L on south
-    # 7: south/west; -, F, L west, J, L south
-    # J: north/west; -, F, L west, 7, F north
-    # L: north/east; -, 7, J on east, 7, F north
-    # S: - e/w, | n/s,
 
 
 if __name__ == "__main__":

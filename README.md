@@ -342,3 +342,47 @@ This assumes perhaps very naively that all routes encounter only one node that e
 ### polynomial
 
 Each line is a series of points on some nth degree polynomial curve. Using those points, determine the next point
+
+### part 2 - predicting the past?!
+
+instead of the *next* point, determine the value *prior to the first*
+
+## day 10 - find the farthest point
+
+find 'S' pos. pipes could only connect n/e/s/w, so check the 4 adj squares
+
+- `-`: `-` on east/west; `F`, `L` on west only, `7`, `J` on east only
+- `|`: `|` on north/south; `J`, `L` on south only, `7`, `F` on north only
+- `F`: east/south; `-`, `7`, `J` on east, `J`, `L` on south
+- `7`: south/west; `-`, `F`, `L` west, `J`, `L` south
+- `J`: north/west; `-`, `F`, `L` west, `7`, `F` north
+- `L`: north/east; `-`, `7`, `J` on east, `7`, `F` north
+- `S`:
+    - north: `|`, `7`, `F`
+    - east: `-`, `7`, `J`
+    - south: `|`, `J`, `L`
+    - west: `-`, `F`, `L`
+
+Use these characteristics to group pipes
+
+- open dirs
+- pipes which fit in that dir
+
+e.g. `-` is open on east and west. so for east, we check whether that pipe is any one that accepts *west* as entry:
+- `-`
+- `7`
+- `J`
+
+so we have `dict` for each pipe that provides a list of open dirs:
+
+```py
+# replace - and | with letters since they're operators in python
+pipe_open = dict(
+    h=[1, -1],
+    v=[-1j, 1j]
+)
+```
+
+Use imaginary `j` to denote coordinates
+
+Plus another dict for each `dir` containing compatible pipe shapes
