@@ -3,8 +3,7 @@ from pathlib import Path
 import argparse
 import logging
 import sys
-from itertools import accumulate, pairwise
-import operator
+from itertools import pairwise
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -16,12 +15,14 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
+
 def differences(points: list[int]) -> list[int]:
     """Returns first difference of list of ints"""
     pairs = pairwise(points)
     diffs = [p[1] - p[0] for p in pairs]
-    logger.debug(f'diffs: {diffs}')
+    logger.debug(f"diffs: {diffs}")
     return diffs
+
 
 def predict_polynomial(line_diffs: list, part_two: bool = False) -> int:
     """
@@ -33,21 +34,25 @@ def predict_polynomial(line_diffs: list, part_two: bool = False) -> int:
     """
 
     addend = 0
-    for diffs in line_diffs[::-1]:
-        diffs.append(diffs[-1] + addend)
-        if part_two:
-            prior = diffs[0] - addend
-        addend = diffs[-1]
-
-    return addend
-
-def extrapolate_past(line_diffs: list) -> int:
-    """
-    Find the value prior to the first in the original sequence
-    """
-
     sub = 0
     for diffs in line_diffs[::-1]:
+        if part_two:
+            sub = diffs[0] - sub
+        else:
+            addend += diffs[-1]
+    if part_two:
+        return sub
+    else:
+        return addend
+
+
+# def extrapolate_past(line_diffs: list) -> int:
+#     """
+#     Find the value prior to the first in the original sequence
+#     """
+
+#     sub = 0
+#     for diffs in line_diffs[::-1]:
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -74,11 +79,12 @@ def main(sample: bool, part_two: bool, loglevel: str):
                 # not all the same; get diffs again
                 points = diffs
             else:
-                preds.append(predict_polynomial(line_diffs))
+                preds.append(predict_polynomial(line_diffs, part_two=part_two))
                 base_diff_found = True
 
-        logger.debug(f'pred: {preds[-1]}')
-    logger.info(f'total extrapolated values: {sum(preds)}')
+        logger.debug(f"pred: {preds}")
+    logger.info(f"total extrapolated values: {sum(preds)}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
