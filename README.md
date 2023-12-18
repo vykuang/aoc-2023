@@ -386,3 +386,34 @@ pipe_open = dict(
 Use imaginary `j` to denote coordinates
 
 Plus another dict for each `dir` containing compatible pipe shapes
+
+To find the furthest point, follow any of the two paths from `S` until it returns to origin, count number of steps, and divide that by two; the number will be even.
+
+- start at S
+- evaluate each dir to see that node is a compatible pipe
+    - there will be two paths that start from S
+    - follow the first starting from north
+- return the pipe shape and pos
+- increment step counter
+- is the new pipe shape `S`?
+    - if yes, return step counter
+    - if not, return to step 2
+    - remember which direction we came from, so we don't check that direction, and end up in infinite loop
+
+### part two - enclosed area
+
+How to determine if a point is inside our loop?
+
+- shoelace algorithm
+- count the number of borders; whether the next node counts as in or out depends on if that number is even or odd
+- expand the resolution so that the gaps can be computed
+    - ???
+
+Let's go with 2 since that one is more intuitively understood.
+
+- Start with our bounding box by taking the min/max of x and y
+    - we start each loop potentially on the border pipe
+- odd number of pipe triggers the count
+- even turns off the count
+
+This requires our initial pathfinding to record the `pos` of each pipe
