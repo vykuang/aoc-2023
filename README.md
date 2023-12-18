@@ -416,4 +416,4 @@ Let's go with 2 since that one is more intuitively understood.
 - odd number of pipe triggers the count
 - even turns off the count
 
-This requires our initial pathfinding to record the `pos` of each pipe
+This requires our initial pathfinding to record the `pos` of each pipe, which is trivial. It also requires us to scan both vertically *and* horizontally. This means recording all the hits from one scan, and cross-reference it with the other, perhaps using `set()` and then taking `len()`

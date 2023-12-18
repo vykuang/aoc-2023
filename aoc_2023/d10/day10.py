@@ -56,6 +56,33 @@ def find_next_pipe(
                 return chk, pos_chk, d
 
 
+def scanline(left_x, right_x, bot_y, top_y, pipe_map, path_map):
+    """
+    Returns pos of nodes inside the loop
+    """
+    # start from min y -> max y
+    # then check for '.' from min x -> min y
+    inside_nodes = []
+    for row in range(bot_y, top_y):
+        logger.debug(f"row: {row}")
+        logger.debug(
+            f"line: {''.join([pipe_map[x + row * (1j)] for x in range(left_x, right_x)])}"
+        )
+        inside = False
+        for col in range(left_x, right_x):
+            pos = col + row * (1j)
+            if pipe_map[pos] == "." and inside:
+                inside_nodes.append(pos)
+            elif pos in path_map:
+                # flip our count condition
+                logger.debug("flip inside")
+                inside = not inside
+            else:
+                next
+        logger.debug(f"current point cum: {n_in}")
+    return inside_nodes
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """
     Pathfinding?
@@ -98,37 +125,24 @@ def main(sample: bool, part_two: bool, loglevel: str):
         curr, pos_curr, d = find_next_pipe(curr, pos_curr, pipe_map, d)
         if part_two:
             # collect all pos
-            path_map.append(pos)
-        else:
-            step += 1
+            path_map.append(pos_curr)
+        step += 1
+        if not part_two:
             logger.debug(f"step {step}\tshape {curr}\tpos {pos_curr}")
     if part_two:
         # iterate over all rows of bounding box
         xs = [int(p.real) for p in path_map]
         ys = [int(p.imag) for p in path_map]
         left_x = min(xs)
-        right_x = max(xs)
-        top_y = max(ys)
+        right_x = max(xs) + 1
+        top_y = max(ys) + 1
         bot_y = min(ys)
-        n_in = 0
-        # start from min y -> max y
-        # then check for '.' from min x -> min y
-        for row in range(bot_y, top_y):
-            logger.debug(f"row: {row}")
-            logger.debug(
-                f"line: {[pipe_map[x + row * (-1j)] for x in range(left_x, right_x)]}"
-            )
-            inside = False
-            for col in range(left_x, right_x):
-                pos = col + row * (-1j)
-                if (chk := pipe_map[pos]) == "." and inside:
-                    n_in += 1
-                elif pos in path_map:
-                    # flip our count condition
-                    logger.debug("flip inside")
-                    inside = not inside
-                else:
-                    next
+        logger.debug(f"bounding box: {left_x}, {bot_y} to {right_x}, {top_y}")
+        inside_hscan = scanline(left_x, right_x, bot_y, top_y, pipe_map)
+        inside_vscan = scanline(top_y, bot_y, right_x, left_x, pipe_map)
+        inside_vscan = transpose(inside_vscan)
+        inside_nodes = set(inside_hscan).intersect(set(inside_vscan))
+        n_in = len(inside_nodes)
         logger.info(f"points inside: {n_in}")
 
     else:
