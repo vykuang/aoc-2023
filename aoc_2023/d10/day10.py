@@ -56,20 +56,22 @@ def find_next_pipe(
                 return chk, pos_chk, d
 
 
-def scanline(left_x, right_x, bot_y, top_y, pipe_map, path_map):
+def scanrow(left_x, right_x, bot_y, top_y, pipe_map, path_map):
     """
     Returns pos of nodes inside the loop
     """
     # start from min y -> max y
     # then check for '.' from min x -> min y
     inside_nodes = []
-    for row in range(bot_y, top_y):
+    step_y = 1 if top_y > bot_y else -1
+    step_x = 1 if right_x > left_x else -1
+    for row in range(bot_y, top_y, step_y):
         logger.debug(f"row: {row}")
         logger.debug(
             f"line: {''.join([pipe_map[x + row * (1j)] for x in range(left_x, right_x)])}"
         )
         inside = False
-        for col in range(left_x, right_x):
+        for col in range(left_x, right_x, step_x):
             pos = col + row * (1j)
             if pipe_map[pos] == "." and inside:
                 inside_nodes.append(pos)
@@ -79,8 +81,40 @@ def scanline(left_x, right_x, bot_y, top_y, pipe_map, path_map):
                 inside = not inside
             else:
                 next
-        logger.debug(f"current point cum: {n_in}")
+        logger.debug(f"running point: {len(inside_nodes)}")
     return inside_nodes
+
+
+def scancol(left_x, right_x, bot_y, top_y, pipe_map, path_map):
+    """
+    scan columns from left to right, top to bottom for inside nodes
+    """
+    inside_nodes = []
+    for col in range(left_x, right_x):
+        logger.debug(f"col: {col}")
+        logger.debug(
+            f"line: {''.join([pipe_map[col + y * (1j)] for y in range(bot_y, top_y)])}"
+        )
+        inside = False
+        for row in range(bot_y, top_y):
+            pos = col + row * 1j
+            if pipe_map[pos] == "." and inside:
+                inside_nodes.append(pos)
+            elif pos in path_map:
+                logger.debug("flip inside")
+                inside = not inside
+            else:
+                next
+        logger.debug(f"running point: {len(inside_nodes)}")
+    return inside_nodes
+
+
+def transpose(c: complex) -> complex:
+    """
+    Treating c as a 2d coord, transpose it
+    e.g. 3 - 4j ->  4 - 3j
+    """
+    return complex(-c.imag, -c.real)
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -138,10 +172,10 @@ def main(sample: bool, part_two: bool, loglevel: str):
         top_y = max(ys) + 1
         bot_y = min(ys)
         logger.debug(f"bounding box: {left_x}, {bot_y} to {right_x}, {top_y}")
-        inside_hscan = scanline(left_x, right_x, bot_y, top_y, pipe_map)
-        inside_vscan = scanline(top_y, bot_y, right_x, left_x, pipe_map)
-        inside_vscan = transpose(inside_vscan)
-        inside_nodes = set(inside_hscan).intersect(set(inside_vscan))
+        inside_hscan = scanrow(left_x, right_x, bot_y, top_y, pipe_map, path_map)
+        inside_vscan = scancol(left_x, right_x, bot_y, top_y, pipe_map, path_map)
+        logger.debug(f"hscan: {inside_hscan}\nvscan: {inside_vscan}")
+        inside_nodes = set(inside_hscan).intersection(set(inside_vscan))
         n_in = len(inside_nodes)
         logger.info(f"points inside: {n_in}")
 

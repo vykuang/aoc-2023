@@ -417,3 +417,45 @@ Let's go with 2 since that one is more intuitively understood.
 - even turns off the count
 
 This requires our initial pathfinding to record the `pos` of each pipe, which is trivial. It also requires us to scan both vertically *and* horizontally. This means recording all the hits from one scan, and cross-reference it with the other, perhaps using `set()` and then taking `len()`
+
+Not really working the way I expected.
+
+## day 11
+
+- `.` is empty space
+- `#` is a galaxy
+- shortest path between *every pair* of galaxies
+    - e.g. with 9 galaxies we have 36 unique pairs
+    - find the shortest path between each unique pair
+- space expands
+- *only some space* expands: col/rows with no `#` are actually twice is large
+    - twice is large = doubled rows or doubled cols
+    - row expands downward
+    - col expands rightward
+- use manhattan distance
+    - up/down/left/right
+- sample soln: 374 for all 36 pairs
+
+### path finding??
+
+Given we know the coordinates of start/end, we do not need to use actual path finding to determine the distance. First take care of the empty space expansion
+
+### part two - bigger empties
+
+each empty is actually one million times larger instead of just double. Easy modification to how I expand the rows/columns. I did get tripped up by the -1. The `mult` in part 1 was actually `2` but because I forgot to -1, it still worked when I left `mult=1`
+
+### insights
+
+`itertools.chain.from_iterable()` to flatten one level of iterables, and `itertools.product` to generate permutations of pairs
+
+## day 12 - damaged springs
+
+- ? - unknown
+- `.` - operational
+- `#` - rosak
+- sequence of numbers: size of each contiguous group of damaged springs
+    - e.g. 1,1,3
+    - three groups, 1, 1, and 3
+    - each surrounded by at least 1 `.`
+    - those surrounding `.` may overlap with other groups'
+- for each row, find how many possible arrangements exist, given the sequence and diagram
