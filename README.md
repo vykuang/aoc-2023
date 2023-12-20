@@ -478,3 +478,29 @@ each empty is actually one million times larger instead of just double. Easy mod
 ### part 2 - unfolding
 
 ok.
+
+## day 13 - reflections and more `.` and `#`
+
+Find the point of reflection in each pattern; patterns are 2D arrays separated by newlines.
+
+- start row-wise
+- check if current row, `r` is same as prev row, `r-1`
+- if yes, iterate to `r+1`, and then compare that to `r-2`
+- continue either one end runs out, or one of the pairs do not equate
+- transpose array and go through row-wise again to find reflecting column
+
+### part 1 - 2d arrays with complex coordinates
+
+Given `list[str]`, how do we *transpose* the array?
+
+```py
+def transpose(pattern: list[str]) -> list[str]:
+    """
+    The "".join() keeps it as a list of str
+    """
+    return ["".join([row[i] for row in pattern]) for i in range(len(pattern[0]))]
+```
+
+### part 2 - smudge
+
+Find the `.` or `#` that when flipped, produces a *different* reflection line. This means that instead of checking each pattern once, we're checking it for potentially as many nodes per pattern
