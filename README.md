@@ -450,7 +450,7 @@ each empty is actually one million times larger instead of just double. Easy mod
 
 ## day 12 - damaged springs
 
-- ? - unknown
+- `?` - unknown
 - `.` - operational
 - `#` - rosak
 - sequence of numbers: size of each contiguous group of damaged springs
@@ -459,3 +459,22 @@ each empty is actually one million times larger instead of just double. Easy mod
     - each surrounded by at least 1 `.`
     - those surrounding `.` may overlap with other groups'
 - for each row, find how many possible arrangements exist, given the sequence and diagram
+
+### brute-force
+
+- there is a finite number of combinations the `?` could be
+- substitute one with `.`, and also with `#`; collect all combinations
+- check how many are valid based on the conditions
+
+### line validation
+
+- inputs: sequence of `.` and `#`, and list of `int`s indicating contiguous groups of `#`, *in that order*
+
+### returning unnested flat list from recursion
+
+- base case: `return [item]`
+- else: `return new_list.extend(recursive_func(args))`
+
+### part 2 - unfolding
+
+ok.
