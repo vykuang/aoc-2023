@@ -1,0 +1,2 @@
+    node_map = {complex(i, j): ch for i, line in enumerate(line_iter)
+            for j, ch in enumerate(line) if (ch == rock | ch == cube)}

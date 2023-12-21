@@ -504,3 +504,17 @@ def transpose(pattern: list[str]) -> list[str]:
 ### part 2 - smudge
 
 Find the `.` or `#` that when flipped, produces a *different* reflection line. This means that instead of checking each pattern once, we're checking it for potentially as many nodes per pattern
+
+## day 14 - total load
+
+More 2D arrays.
+
+- `O` - rollable rocks
+- `#` - barriers
+- `.` - empty space
+
+Given puzzle input, tilt the array north, so that all `O` moves north until it's either stopped by the edge, a barrier, or another rock. Calculate load, as determined by distance from bottom row. If array has 10 rows, then each `O` on top row
+has `load = 10`; bottom row `O` has `load = 1`
+
+- Since we're tilting north, consider row by row, starting from the *second* row
+- then consider node by node, and keep moving north until blocked by edge, barrier, or another rock
