@@ -4,6 +4,7 @@ import argparse
 import logging
 import sys
 from operator import attrgetter
+import time
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -56,6 +57,8 @@ def main(sample: bool, part_two: bool, loglevel: str, rock="O", cube="#"):
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
+    # timing
+    tstart = time.time_ns()
     # read into mem
     lines = list(read_line(fp))
     nrows = len(lines)
@@ -82,16 +85,24 @@ def main(sample: bool, part_two: bool, loglevel: str, rock="O", cube="#"):
             ]
             logger.debug(f"edges: {edges}")
             if edges:
-                edge = edges.sort(key=attrgetter("imag"))[-1]
+                # check collision
+                edge = sorted(edges, key=attrgetter("imag"))[-1]
+                logger.debug(f"edge: {edge}")
+                tilted = edge.imag + 1 if edge.imag < pos.imag - 1 else pos.imag
+            else:
+                # go to array boundary
+                tilted = 0
 
-                tilted = edge.imag - 1 if edge.imag < pos.imag - 1 else pos.imag
-                # update original node_map
-                pos_new = complex(pos.real, tilted)
-                logger.debug(f"node pos updated to {pos_new}")
-                node_map[idx] = {"pos": pos_new, "node": node}
+            # update original node_map
+            pos_new = complex(pos.real, tilted)
+            logger.debug(f"node pos updated to {pos_new}")
+            node_map[idx] = {"pos": pos_new, "node": node}
 
     load = calc_load(node_map, nrows)
     logger.info(f"load: {load}")
+    tstop = time.time_ns()
+    runtime = (tstop - tstart) / 1e3
+    logger.info(f"runtime: {runtime} us")
 
 
 if __name__ == "__main__":
