@@ -518,3 +518,44 @@ has `load = 10`; bottom row `O` has `load = 1`
 
 - Since we're tilting north, consider row by row, starting from the *second* row
 - then consider node by node, and keep moving north until blocked by edge, barrier, or another rock
+
+### part 2 - spin cycle
+
+- north -> east -> south -> west is one cycle
+- spin for 1e9 cycles
+- calculate load
+- **cycle detection**
+- encapsulate the *tilt* into a function
+- write `transpose`, then feed into `tilt`
+    - what does transpose look like?
+    - not much of a transpose, more of a `rotate`
+    - what does `rotate` look like?
+    - should I integrate that into `tilt` instead?
+- how does `tilt` with direction look like?
+    - default pulls north
+    - for `rock`, look for any barriers/rocks *north*, and return the new coordinate at the edge
+    - north: new col, move up
+    - south: new row, move down
+    - okay let's rotate instead
+- rotate
+    - take node map, size of grid, e.g. 4 rows x 5 cols, and the rotation target
+    - east: rotate CW 3x; south: 2x; west: 1x
+    - since we're doing east first, we should rotate CCW
+    - given row 4, col 3: `2+3j` in a 4 x 5 grid:
+        - CCW 1: `3 + (nrows-2)j = 3 + (4-2)j = 3 + 2j`
+            - new grid size: 5 rows x 4 cols
+        - CCW 2: `2 + (nrows-3)j = 2 + (5-3)j = 2 + 2j`
+            - new grid size: 4 rows x 5 cols, again
+        - CCW 3: `2 + (nrows - 2)j = 2 + (4-2)j = 2 + 2j`
+            - new grid size: 5 rows x 4 cols
+        - CCW 4: `2 + (nrows - 2) = 2 + (5-2)j = 2 + 3j
+    - `ccw_coord = pos.imag + (nrows - pos.real)j`
+    - switch nrow/col after each change
+- after each spin, cache the north beam load?
+    - or cache the *hash* of our node map, to be used for cycle detection
+    - avoid calculating load unnecessarily
+- `dict` is not hashable; not compatible with `@cache`
+    - switch to namedtuple?
+    - `frozenset` to not reinvent the wheel
+    - `list` to `tuples`
+    - point is *immutability*
