@@ -550,6 +550,11 @@ has `load = 10`; bottom row `O` has `load = 1`
             - new grid size: 5 rows x 4 cols
         - CCW 4: `2 + (nrows - 2) = 2 + (5-2)j = 2 + 3j
     - `ccw_coord = pos.imag + (nrows - pos.real)j`
+    - sorry, *west* first, so rotate CW; given same point and grid:
+        - CW1: `0+2j = (nrows - 3 - 1) + 5j = (nrows - pos.imag - 1) + pos.real * 1j`
+            - ncol = nrows = 4
+            - nrows = ncols = 5
+        - CW2: `(nrows - 2 - 1) + 0j = 5 - 2 - 1 + 0j = 2 + 0j`
     - switch nrow/col after each change
 - after each spin, cache the north beam load?
     - or cache the *hash* of our node map, to be used for cycle detection
@@ -559,3 +564,21 @@ has `load = 10`; bottom row `O` has `load = 1`
     - `frozenset` to not reinvent the wheel
     - `list` to `tuples`
     - point is *immutability*
+
+### immutable namedtuples
+
+- `node_map` becomes tuple of namedtuple
+- each node has these attr:
+    - idx
+        - not needed
+    - shape
+    - pos
+- updating: convert to list, remove original, add new
+
+### `@cache`
+
+not seeing real gains from sample input, from 10 - 10000 cycles: 26 - 20872 ms. Need to implement cycle detection
+
+### cycle detection
+
+Save the load from each cycle and wait for a repeat

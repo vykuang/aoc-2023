@@ -9,6 +9,7 @@ from collections import namedtuple
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
+# use tuples of namedtuple for @cache
 Node = namedtuple("Node", "idx, shape, pos")
 
 
@@ -27,10 +28,10 @@ def make_map(line_iter, rock="O", cube="#", space="."):
         for j, ch in enumerate(line)
         if (ch == rock or ch == cube)
     }
-    rocks = {i: pos for i, (pos, k) in enumerate(node_map.items()) if k == rock}
-    cubes = {i: pos for i, (pos, k) in enumerate(node_map.items()) if k == cube}
+    # rocks = {i: pos for i, (pos, k) in enumerate(node_map.items()) if k == rock}
+    # cubes = {i: pos for i, (pos, k) in enumerate(node_map.items()) if k == cube}
     # node_map = {i: {"pos": k, "node": v} for i, (k, v) in enumerate(node_map.items())}
-    node_map = {rock: rocks, cube: cubes}
+    node_map
     return node_map
 
 
