@@ -15,6 +15,21 @@ def read_line(fpath: str):
         yield from f
 
 
+def aoc_hash(step) -> int:
+    """
+    add ascii val
+    mult 17
+    mod 256
+    """
+    val = 0
+    for ch in step:
+        val += ord(ch)
+        val *= 17
+        val %= 256
+    logger.debug(f"hash val: {val}")
+    return val
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
@@ -24,6 +39,14 @@ def main(sample: bool, part_two: bool, loglevel: str):
         fp = "sample.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
+
+    steps = next(read_line(fp)).strip().split(",")
+    hashes = []
+    for step in steps:
+        logger.debug(f"step: {step}")
+        hashes.append(aoc_hash(step))
+
+    logger.info(f"sum: {sum(hashes)}")
 
 
 if __name__ == "__main__":

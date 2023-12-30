@@ -582,3 +582,24 @@ not seeing real gains from sample input, from 10 - 10000 cycles: 26 - 20872 ms. 
 ### cycle detection
 
 Save the load from each cycle and wait for a repeat
+
+Takes 5 minutes to calculate 100 cycles.
+
+### optimiztions
+
+since we're moving rocks north, we should iterate on each column instead, and keep track of the *next available slot*
+
+## day 15 - HASH
+
+- get ascii code lookup
+    - use `ord()` built-in func to retrieve ascii code
+- start at 0
+- increase by char's ascii
+- mult 17
+- mod 256
+- input is comma separated
+- sum the HASH for each entry
+
+### part ii - focusing power
+
+this one is a doozy
