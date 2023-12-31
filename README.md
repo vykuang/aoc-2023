@@ -602,4 +602,30 @@ since we're moving rocks north, we should iterate on each column instead, and ke
 
 ### part ii - focusing power
 
-this one is a doozy
+this one is a doozy.
+
+- 256 boxes, 0 - 255
+- boxes arranged in a line so that light passes from first to last box
+- different lens slots in each box; insert or remove from side
+- lenses range from 0 - 9 (focal length)
+- run `HASH` on the initial letters of each step to get the correct *box*
+- `-` or `=` are *operation characters*
+    - `-` - remove lens from box with given label, and shift remaining lenses forward
+    - `=` is lways followed by a *focal length* of lens. One type of that lens will go into the relevant box. This lens is *labelled* with the label given in the step; recall the HASHing the label gives relevant box
+        - if that box already contains a lens of the same length, replace it, now with new *label*
+        - else, add to last lens of box, as in a queue
+- add *focusing power* of all lenses, in every box
+    - $fp_{lens} = (1 + n_{box}) * n_{lens} * focal length$
+
+### queues and maps
+
+- iterate through steps
+- save the `label`
+- each step requires `aoc_hash` to find relevant box number, then:
+- `remove_lens` and `add_lens` method, depending on operation character
+- `remove` removes lens of that label from box list if exists
+    - require random access - use list over deque
+- `add` appends new lens to the box
+- modelling the system:
+    - default dict of list? each box contains a list
+    - list contains `namedtuple` of lens with attr `label` and `focal_length`
