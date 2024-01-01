@@ -25,6 +25,21 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
+    grid = list(read_line(fp))
+    logger.debug(f"{grid}")
+
+    origin = [1 + 0j, 0j]  # direction, pos
+    beams = [origin]
+    while beams:
+        # stop when all beams reach boundary;
+        for beam in beams:
+            # calc next tile for all beams
+            nx = beam[0] + beam[1]
+
+            # store traversed tiles
+
+        # remove from beams if next tile is out of bounds
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -629,3 +629,44 @@ this one is a doozy.
 - modelling the system:
     - default dict of list? each box contains a list
     - list contains `namedtuple` of lens with attr `label` and `focal_length`
+- using `namedtuple` as default for `defaultdict` resulted in a strange behaviour where appending or removing from any one `namedtuple` propagated the same changes to all other. i.e. adding lens to one box also added to all other boxes
+- use a class that holds 2 lists, 1 for labels, 1 for focals
+    - easier to retain order with `list`
+
+## day 16 - path-directing
+
+- 2d grid
+- enter from top left, to the right
+- `.` - empty
+- `/` or `\` - reflect 90deg
+- `-` or `|`
+    - pointy: empty space
+    - flat: *split into both directions*
+- tile is *energized* if a beam passes through, reflects, or splits in it
+
+### part 1 - count energies
+
+how many tiles are energized? how would the beam path be calculated?
+
+- Follow the original beam, and keep track of where splits occur
+- once the beam hits the edge, return to those branches
+- each split appends another beam to our `to_traverse` list
+- since tiles are energized with any number of beams, use `set` of positions to keep track of overlaps
+
+### traversal logic
+
+- at each tile, we have `entry_dir`, `tile_op`, which outputs `exit_dir`, and potentially `split_dir`
+- `.` - no op for all dir
+- `|` - no op for vertical; exit and split_dir for flats
+- `-` - no op for horizontal, exit/split for flats
+- `/`
+    - going left -> going down;
+    - right -> up;
+    - down -> left;
+    - up -> right
+- `\`
+    - left -> up
+    - right -> down
+    - down -> right
+    - up -> left
+-

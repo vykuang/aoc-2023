@@ -10,8 +10,48 @@ import re
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-Lens = namedtuple("Lens", "label, focal")
-Box = namedtuple("Box", "labels, focals", defaults=([], []))
+Lens = namedtuple("Lens", "label focal")
+
+
+class Box:
+    def __init__(self, labels=[], focals=[]):
+        # holds two lists
+        # self.lenses = lenses
+        self.labels = []
+        self.focals = []
+
+    def find_idx(self, label: str):
+        if label in self.labels:
+            return self.labels.index(label)
+        else:
+            return -1
+
+    def remove_lens(self, label: str):
+        """
+        remove lens of that label from box
+        """
+        if (idx := self.find_idx(label)) >= 0:
+            self.labels.remove(label)
+            del self.focals[idx]
+        else:
+            logger.debug(f"{label} not in box")
+
+    def add_lens(self, label: str, focal: int):
+        """
+        Add lens with spec'd label and focal
+        if same label exists, replace focal
+        """
+        if (idx := self.find_idx(label)) >= 0:
+            # update label
+            self.focals[idx] = focal
+        else:
+            # new lens
+            self.labels.append(label)
+            self.focals.append(focal)
+
+    def __repr__(self):
+        content = [(label, focal) for label, focal in zip(self.labels, self.focals)]
+        return f"{content}"
 
 
 def read_line(fpath: str):
@@ -35,38 +75,6 @@ def aoc_hash(step) -> int:
         val %= 256
     # logger.debug(f"hash val: {val}")
     return val
-
-
-def remove_lens(boxes, box_num, label):
-    """
-    Remove lens with the label from specified box
-    if exists
-    """
-    if label in (labels := boxes[box_num].labels):
-        logger.debug(f"removing {label} from box {box_num}")
-        idx_lens = labels.index(label)
-        del boxes[box_num].labels[idx_lens]
-        del boxes[box_num].focals[idx_lens]
-    else:
-        logger.debug(f"label {label} not found in box {box_num}")
-
-
-def add_lens(boxes, box_num, label, focal):
-    """
-    Add lens of that label and focal length
-    to specified box
-    If a lens of same length exists, replace with new label
-    """
-    logger.debug(f"adding {label}={focal} to box {box_num}")
-    if focal in (focals := boxes[box_num].focals):
-        logger.debug(f"duplicate focal {focal}; changing labels")
-        idx_lens = focals.index(focal)
-        boxes[box_num].labels[idx_lens] = label
-    else:
-        # new lens
-        logger.debug("new lens added")
-        boxes[box_num].labels.append(label)
-        boxes[box_num].focals.append(focal)
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -96,10 +104,13 @@ def main(sample: bool, part_two: bool, loglevel: str):
             label = parts.group(1)
             box_num = aoc_hash(label)
             if parts.group(2) == "-":
-                remove_lens(boxes, box_num, label)
+                # remove_lens(boxes, box_num, label)
+                boxes[box_num].remove_lens(label)
             else:
                 focal = int(parts.group(3))
-                add_lens(boxes, box_num, label, focal)
+                # add_lens(boxes, box_num, label, focal)
+                boxes[box_num].add_lens(label, focal)
+            # logger.debug(f'boxes:\n{pprint(boxes)}')
 
         # iterate through boxes to find sum
         powers = []
