@@ -4,6 +4,8 @@ __pycache__/
 # data
 .ruff_cache/
 **/.*.swp
+# I used clip.exe to copy from vim out to windows
+*.exe
 
 # inputs
 input.txt

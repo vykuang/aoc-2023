@@ -653,7 +653,7 @@ how many tiles are energized? how would the beam path be calculated?
 - each split appends another beam to our `to_traverse` list
 - since tiles are energized with any number of beams, use `set` of positions to keep track of overlaps
 
-### traversal logic
+### tile logic
 
 - at each tile, we have `entry_dir`, `tile_op`, which outputs `exit_dir`, and potentially `split_dir`
 - `.` - no op for all dir
@@ -685,3 +685,28 @@ some light beams do not exit the bounds, and loops indefinitely
         - dir
         - pos
         - set of traversed tiles
+        - all 3 updated each cycle
+        - cannot use `namedtuple`
+- use a class with attributes
+- issue: generating new beams that have already been traversed before
+    - check if new beam is already in `travelled` before appending to list
+    - we need to *also check the entry direction* not just the `pos`
+
+### traversal algorithm
+
+initial state:
+
+- pos
+- dir
+
+steps:
+
+1. calc next
+1. validate next
+    1. if no, mark and move on to next beam
+    1. if yes, continue
+1. traverse
+    1. add to `traversed`
+    1. update `pos`
+    1. update `dir` based on tile
+1. if tile splits successfully, append `Beam` object
