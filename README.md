@@ -660,13 +660,28 @@ how many tiles are energized? how would the beam path be calculated?
 - `|` - no op for vertical; exit and split_dir for flats
 - `-` - no op for horizontal, exit/split for flats
 - `/`
-    - going left -> going down;
-    - right -> up;
-    - down -> left;
-    - up -> right
+    - going left -> going down; -1 -> +1j
+    - right -> up; 1 -> -1j
+    - down -> left; 1j -> -1
+    - up -> right; -1j -> +1
+    - `new_dir = dir * -1j`
 - `\`
-    - left -> up
-    - right -> down
-    - down -> right
-    - up -> left
--
+    - left -> up; -1 -> -1j
+    - right -> down; +1 -> +1j
+    - down -> right; +1j -> +1
+    - up -> left; -1j -> -1
+    - `new_dir = dir * 1j`
+    - take the transpose, don't multiply
+
+### loop detection
+
+some light beams do not exit the bounds, and loops indefinitely
+
+- keep track of the tiles traversed *per beam*
+- if repeat is detected, close off the beam
+- use a dict?
+    - key - origin
+    - val - another dict
+        - dir
+        - pos
+        - set of traversed tiles
