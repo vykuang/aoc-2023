@@ -420,7 +420,7 @@ This requires our initial pathfinding to record the `pos` of each pipe, which is
 
 Not really working the way I expected.
 
-## day 11
+## day 11 - grid expansion - cartesian distances
 
 - `.` is empty space
 - `#` is a galaxy
@@ -691,6 +691,9 @@ some light beams do not exit the bounds, and loops indefinitely
 - issue: generating new beams that have already been traversed before
     - check if new beam is already in `travelled` before appending to list
     - we need to *also check the entry direction* not just the `pos`
+    - this applies to the `Beam.traversed` set. The beam may pass horizontally through `-`, and circle back from underneath. Even though the tile has been traversed, it was not traversedfrom that direction, which would have split the beam going left
+    - likewise with mirrors, the entry direction also needs to be accounted for
+- a split beam does not include original `pos` in traversed, when it should. it does not know it should stop there if it cycles back to its original `pos`
 
 ### traversal algorithm
 
@@ -710,3 +713,21 @@ steps:
     1. update `pos`
     1. update `dir` based on tile
 1. if tile splits successfully, append `Beam` object
+
+### profiling
+
+```bash
+python -m cProfile -s cumulative my_aoc_script.py | head -n 20
+```
+
+Don't need a fancy code editor for profiling.
+
+Incidentally, even though `logger.debug` statements are not output when level > debug, *its arguments are still computed*. Hence, `__repr__` in my debug calls took up 72s when running actual puzzle input. Without `__repr__`, runtime cut down to 66 ms.
+
+Consider logging to file, not console, or wrapping the calls inside a loglevel check
+
+### part two - maximizing energized tiles
+
+Find the entrypoint/entry direction that energizes the most tiles
+
+Given a grid of 110 x 110, we have 108 * 4 + 4 corners * 2 = 442 candidates

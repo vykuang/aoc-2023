@@ -9,61 +9,28 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def get_dir(entry_dir: complex, tile: str) -> complex:
-    """Determine new dir based on tile
-    Returns new dir in complex: [1+0j, -1+0j, 1j, -1j]
-    """
-    # default values
-    nx_dir = entry_dir
-    split_dir = None
-    logger.debug(f"entry: {entry_dir}\ttile: {tile}")
-    match tile:
-        # case '.':
-        case "/":
-            nx_dir = complex(-entry_dir.imag, -entry_dir.real)
-        case "\\":
-            nx_dir = complex(entry_dir.imag, entry_dir.real)
-        case "-":
-            if entry_dir not in [-1, 1]:
-                # split
-                nx_dir = 1
-                split_dir = -1
-            if entry_dir not in [-1j, 1j]:
-                # split
-                nx_dir = 1j
-                split_dir = -1j
-    logger.debug(f"nxdir: {nx_dir}\tsplitdir: {split_dir}")
-    return nx_dir, split_dir
-
-
 class Beam:
+    # shared attributes between all Beams
+    # access with Beam.traversed
+    traversed = set()
+
     def __init__(self, direc: complex, pos: complex) -> None:
         self.direc = direc
         self.pos = pos
-        self.traversed = set()
         self.nx = None
         self.complete = False
 
     def __repr__(self) -> str:
         return f"dir: {self.direc}\tpos: {self.pos}\ntraversed: {self.traversed}"
 
-    def check_complete(self, max_x, max_y):
-        self.nx = self.direc + self.pos
-        if self.nx in self.traversed or not (
-            0 <= self.nx.real < max_x and 0 <= self.nx.imag < max_y
-        ):
-            # loop; within bounds
-            self.complete = True
-
     def traverse(self, grid, max_x, max_y):
         """
         Update dir and pos based on next tile
         Returns another Beam if split
-
         """
         # calc and validate
         self.nx = self.direc + self.pos
-        if self.nx in self.traversed or not (
+        if (self.direc, self.nx) in Beam.traversed or not (
             0 <= self.nx.real < max_x and 0 <= self.nx.imag < max_y
         ):
             # loop or outside bounds
@@ -71,8 +38,8 @@ class Beam:
         else:
             # update beam pos
             self.pos = self.nx
-            # store traversed tiles if inside bounds
-            self.traversed.add(self.pos)
+            # store traversed tiles
+            Beam.traversed.add((self.direc, self.nx))
             # update dir based on prior dir and new tile
             tile = grid[int(self.nx.imag)][int(self.nx.real)]
             # Beam obj
@@ -81,13 +48,12 @@ class Beam:
 
     def update_dir(self, tile) -> complex:
         split_dir = None
-        logger.debug(f"entry: {self.direc}\ttile: {tile}")
+        # logger.debug(f"entry: {self.direc}\ttile: {tile}")
         match tile:
-            # case '.':
             case "/":
-                self.direc = complex(-self.direc.imag, -self.direc.real)
+                self.direc = -1j / self.direc
             case "\\":
-                self.direc = complex(self.direc.imag, self.direc.real)
+                self.direc = 1j / self.direc
             case "-":
                 if self.direc not in [-1, 1]:
                     # split
@@ -98,7 +64,8 @@ class Beam:
                     # split
                     self.direc = 1j
                     split_dir = -1j
-        logger.debug(f"nxdir: {self.direc}\tsplitdir: {split_dir}")
+        # if logger.isEnabledFor(logging.DEBUG):
+        #     logger.debug(f"nxdir: {self.direc}\tsplitdir: {split_dir}")
         return split_dir
 
 
@@ -107,6 +74,38 @@ def read_line(fpath: str):
     fpath = Path(fpath)
     with open(fpath) as f:
         yield from f
+
+
+def count_energized(entry_beam, grid, max_x, max_y):
+    """
+    Given an arbitrary entry beam located at the edge,
+    count energized tiles
+    """
+    # beams = [Beam(entry_dir, entry_pos)]
+    beams = [entry_beam]
+    for beam in beams:
+        while not beam.complete:
+            # logger.debug(f'{30*"-"}\n{repr(beam)}')
+            # moves beam by one tile; returns split if encountered
+            split_beam = beam.traverse(grid, max_x, max_y)
+            if split_beam:
+                # logger.debug(f'list of splits: {splits}')
+                # logger.debug(f"new splits: {repr(split_beam)}")
+                # handle split beam
+                beams.append(split_beam)
+                # record split pos
+                # splits.update([split_beam.pos])
+        # if logger.isEnabledFor(logging.DEBUG):
+        #     logger.debug("beam complete")
+        #     logger.debug(f"num of beams: {len(beams)}")
+
+    # node[1] selects `pos`
+    energized = set([node[1] for node in Beam.traversed])
+    n_energized = len(energized)
+    logger.debug(f"energized tiles: {n_energized}")
+    # clear the shared traversed set
+    Beam.traversed.clear()
+    return n_energized
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -128,27 +127,50 @@ def main(sample: bool, part_two: bool, loglevel: str):
     for line in grid:
         logger.debug(f"{line}")
 
-    travelled = set()
-    origin = Beam(direc=1 + 0j, pos=-1 + 0j)
-    beams = [origin]
-    # stop when all beams reach boundary or loop;
-    for beam in beams:
-        t0 = time_ns()
-        while not beam.complete:
-            logger.debug(f'{30*"-"}\n{repr(beam)}')
-            split_beam = beam.traverse(grid, max_x, max_y)
-            if split_beam and split_beam.pos not in travelled:
-                logger.debug(f"new beam: {repr(split_beam)}")
-                # handle split beam
-                beams.append(split_beam)
-        t1 = time_ns()
-        logger.info(f"beam time: {(t1-t0)/1e6} ms")
-        logger.debug(f"beam complete: {beam}")
-        logger.debug(f"num of beams: {len(beams)}")
-        travelled.update(beam.traversed)
-        # f = input()
+    if part_two:
+        # construct list of candidates
+        energized = []
+        # for col in range(0, max_x):
+        #     energized.append((count_energized(Beam(1j, col - 1j), grid, max_x, max_y), col - 1j))
+        #     energized.append((count_energized(Beam(-1j, col + max_y * 1j), grid, max_x, max_y), col + max_y * 1j))
+        energized = [
+            (count_energized(Beam(1j, col - 1j), grid, max_x, max_y), col - 1j)
+            for col in range(0, max_x)
+        ]
+        energized += [
+            (
+                count_energized(Beam(-1j, col + max_y * 1j), grid, max_x, max_y),
+                col + max_y * 1j,
+            )
+            for col in range(0, max_x)
+        ]
+        energized += [
+            (
+                count_energized(Beam(1 + 0j, -1 + row * 1j), grid, max_x, max_y),
+                -1 + row * 1j,
+            )
+            for row in range(0, max_y)
+        ]
+        energized += [
+            (
+                count_energized(Beam(-1 + 0j, max_x + row * 1j), grid, max_x, max_y),
+                max_x + row * 1j,
+            )
+            for row in range(0, max_y)
+        ]
+        # for row in range(0, max_y):
+        #     energized.append((count_energized(Beam(1+0j, -1 + row * 1j), grid, max_x, max_y), -1 + row * 1j))
+        #     energized.append((count_energized(Beam(-1+0j, max_x + row * 1j), grid, max_x, max_y), max_x + row * 1j))
 
-    logger.info(f"energized tiles: {len(travelled)}")
+        most_energy = max(energized, key=lambda b: b[0])
+        max_entry = most_energy[1]
+        logger.info(f"max: {most_energy[0]}\tentry: {max_entry}")
+
+    else:
+        origin = Beam(1 + 0j, -1 + 0j)
+        n_energized = count_energized(origin, grid, max_x, max_y)
+        logger.info(f"energized tiles: {n_energized}")
+
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
