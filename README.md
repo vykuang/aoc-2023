@@ -671,7 +671,8 @@ how many tiles are energized? how would the beam path be calculated?
     - down -> right; +1j -> +1
     - up -> left; -1j -> -1
     - `new_dir = dir * 1j`
-    - take the transpose, don't multiply
+    - ~~take the transpose, don't multiply~~
+- from reddit: divide into `1j` and `-1j`
 
 ### loop detection
 
@@ -731,3 +732,38 @@ Consider logging to file, not console, or wrapping the calls inside a loglevel c
 Find the entrypoint/entry direction that energizes the most tiles
 
 Given a grid of 110 x 110, we have 108 * 4 + 4 corners * 2 = 442 candidates
+
+## day 17 - pathfinding through heat loss
+
+- grid of integers, representing heat loss
+- entry from top left
+- go towards bottom right
+- heat loss incurred if we *enter that block*
+    - top left entry node does not count since we start there
+- movement constraints
+     - move <= 3 blocks straight
+     - move turn 90 deg after 3 blocks straight
+     - no reverse: only fwd, left, or right, relative to current heading
+- problem: minimize heat loss
+
+### pathfinding with djikstra
+
+modifications:
+
+1. no reverse: only three child nodes
+    - keep track of entry direction so we do not reverse
+1. boundary checking: can't exit the city
+1. max 3 blocks straight: if we choose straight (`s`) direction 3 times, the 4th must be `l` or `r`
+    - keep `s` counter
+1. weighted - heat loss must be minimized
+
+Refresher:
+
+1. mark distance from origin to every node as `inf`, or unlabelled to denote *unvisited*
+1. select current node
+1. mark distance as zero
+1. find next closest (child) nodes
+    - keep track of each node's parent
+1. *update* the distance from origin to these child nodes, if the new distance is less than the existing
+1. once `dest` is marked is visited, we've determined the shortest path
+    - calc the distance by tracing back parents

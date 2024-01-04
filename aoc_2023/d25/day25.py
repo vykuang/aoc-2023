@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse
 import logging
 import sys
+from time import time_ns
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -24,6 +25,16 @@ def main(sample: bool, part_two: bool, loglevel: str):
         fp = "sample.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
+
+    # read input
+
+    # execute
+    tstart = time_ns()
+
+    # output
+
+    tstop = time_ns()
+    logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
 
 if __name__ == "__main__":
