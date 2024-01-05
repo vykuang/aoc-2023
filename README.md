@@ -785,3 +785,5 @@ entry = node - prev[node]
 simply checking `curr - prev[curr]` is not enough. This method of checking somehow closes off child nodes that could provide a shorter path in the future. In effect it seems to be follow some local minimum without seeing the whole picture.
 
 The solution here is that instead of using only coordinates to identify each node, we need to assign direction, and for how many edges it's travelled in that direction. In practice this enlarges our search space from `(nrows, ncols)` to `(nrows, ncols, entry_dir, exit_dir)`, 2D to 4D space
+
+If I include `entry`, how do I prevent a local loop, since it's now recognized as a different node?

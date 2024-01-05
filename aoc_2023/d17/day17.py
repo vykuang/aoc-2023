@@ -30,7 +30,7 @@ def all_equal(iterable):
 class Node:
     pos: complex
     entry: complex
-    dir_count: int = 0
+    n_dir: int = 0
 
     @property
     def real(self):
@@ -91,12 +91,12 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
             route = deque()
             if prev[node] or node == src:
                 while node:
-                    route.appendleft(node)
+                    route.appendleft(node.pos)
                     node = prev[node]
             logger.info(f"route: {route}")
             return dists[curr]
         logger.debug(
-            f'{"-"*30}\ncurrent node: ({int(curr.real)}, {int(curr.imag)}): {grid[int(curr.imag)][int(curr.real)]}'
+            f'{"-"*30}\ncurrent node: ({curr.real}, {curr.imag}): {grid[curr.imag][curr.real]}'
         )
         # check adjacent nodes
         for dir in [-1, 1, 1j, -1j]:
@@ -111,11 +111,12 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
             node = curr
             # prev[node] = 0j will skip this section,
             # if not explicitly checking for "is not None"
-            while prev[node] is not None and depth < depth_limit:
-                last_dirs.append(node - prev[node])
-                node = prev[node]
-                depth += 1
-            if depth == depth_limit and all_equal(last_dirs):
+            # while prev[node] is not None and depth < depth_limit:
+            #     last_dirs.append(node - prev[node])
+            #     node = prev[node]
+            #     depth += 1
+            # if depth == depth_limit and all_equal(last_dirs):
+            if dir == curr.entry and curr.n_dir == 3:
                 logger.debug("next; 3 in a row")
                 continue
             nx = curr.pos + dir
@@ -124,11 +125,14 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
             if 0 <= nx.real < ncols and 0 <= nx.imag < nrows:
                 # check if new dist is shorter
                 nx = Node(nx, dir)
-                alt = dists[curr] + int(grid[int(nx.imag)][int(nx.real)])
+                alt = dists[curr] + int(grid[nx.imag][nx.real])
                 if alt < dists[nx]:
                     # if so, update dist, prev
                     dists[nx] = alt
                     prev[nx] = curr
+                    nx.entry = dir
+                    if dir == curr.entry:
+                        nx.n_dir = curr.entry + 1
                     to_check.append(nx)
                     logger.debug(f"updated dist: {alt}")
             else:
