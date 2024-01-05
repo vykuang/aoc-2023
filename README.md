@@ -786,4 +786,19 @@ simply checking `curr - prev[curr]` is not enough. This method of checking someh
 
 The solution here is that instead of using only coordinates to identify each node, we need to assign direction, and for how many edges it's travelled in that direction. In practice this enlarges our search space from `(nrows, ncols)` to `(nrows, ncols, entry_dir, exit_dir)`, 2D to 4D space
 
-If I include `entry`, how do I prevent a local loop, since it's now recognized as a different node?
+If I include `entry`, how do I prevent a local loop, since it's now recognized as a different node? It would, I just need to check that it's not in `visited` before I append to queue
+
+### part 2 - ultra crucible
+
+more movement constraint:
+
+- minimum 4 blocks movement
+    - add another check
+    - must move >= 4 blocks for it to stop
+    - the above requires that I check for *all the target nodes* before exiting
+    - how many could there be?
+    - two entry directions
+    - last starting corner could be 4 - 10 squares away: 7
+    - 14 possible targets
+- max 10 blocks
+    - change from 3 to 10

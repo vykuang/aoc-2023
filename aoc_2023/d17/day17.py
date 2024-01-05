@@ -26,11 +26,11 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-@dataclass(eq=False)
+@dataclass
 class Node:
     pos: complex
     entry: complex
-    n_dir: int = 0
+    n_dir: int = 1  # init to 1 when creating child nodes
 
     @property
     def real(self):
@@ -49,20 +49,29 @@ class Node:
         return int(self.pos.imag)
 
     @imag.setter
-    def imag(self, val):
+    def imag(self, value):
         raise Exception("read only")
 
     def __hash__(self):
         return hash((self.pos, self.entry))
 
     def __sub__(self, other):
+        # only works between Nodes
         return self.pos - other.pos
 
     def __add__(self, other):
-        return self.pos + other.pos
+        if isinstance(other, Node):
+            addend = other.pos
+        elif isinstance(other, complex):
+            addend = other
+        else:
+            raise ValueError("Not supported")
+        return self.pos + addend
 
 
-def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
+def heat_loss_dijkstra(
+    grid, src=0 + 0j, min_blocks: int = 0, max_blocks: int = 3, part_two: bool = False
+):
     """ """
     ncols = len(grid[0])
     nrows = len(grid)
@@ -78,6 +87,7 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
     target = ncols - 1 + (nrows - 1) * 1j
     # to_check = [col + row * 1j for row in range(nrows) for col in range(ncols)]
     to_check = [src]
+    targets = []
     while to_check:
         # retrieve node with min dist[node]
         to_check = sorted(to_check, key=lambda node: dists[node], reverse=True)
@@ -85,42 +95,46 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
         if curr in visited:
             continue
         if curr.pos == target:
-            logger.info("target found")
-            # debug
-            node = curr
-            route = deque()
-            if prev[node] or node == src:
-                while node:
-                    route.appendleft(node.pos)
-                    node = prev[node]
-            logger.info(f"route: {route}")
-            return dists[curr]
+            logger.info("potential target found")
+            if part_two:
+                logger.info(f"n_dir: {curr.n_dir}")
+                if curr.n_dir < min_blocks:
+                    # not enough to satisfy min movements;  discard
+                    continue
+                else:
+                    targets.append(curr)
+                    logger.info(f"{len(targets)} potential target saved")
+                    continue
+
+            else:
+                node = curr
+                route = deque()
+                if prev[node] or node == src:
+                    while node:
+                        route.appendleft(node.pos)
+                        node = prev[node]
+                logger.info(f"route: {route}")
+                return dists[curr]
         logger.debug(
-            f'{"-"*30}\ncurrent node: ({curr.real}, {curr.imag}): {grid[curr.imag][curr.real]}'
+            f'{"-"*30}\ncurrent node: ({curr.real}, {curr.imag}, {curr.entry}): {grid[curr.imag][curr.real]}'
         )
         # check adjacent nodes
-        for dir in [-1, 1, 1j, -1j]:
-            logger.debug(f"checking dir {dir}")
+        for dir in [-1 + 0j, 1 + 0j, 1j, -1j]:
+            # logger.debug(f"checking dir {dir}")
             # no reverse
             if prev[curr] is not None and dir == prev[curr] - curr:
                 logger.debug("next; reverse")
                 continue
-            # max 3 in a row
-            last_dirs = [dir]
-            depth = 0
-            node = curr
-            # prev[node] = 0j will skip this section,
-            # if not explicitly checking for "is not None"
-            # while prev[node] is not None and depth < depth_limit:
-            #     last_dirs.append(node - prev[node])
-            #     node = prev[node]
-            #     depth += 1
-            # if depth == depth_limit and all_equal(last_dirs):
-            if dir == curr.entry and curr.n_dir == 3:
-                logger.debug("next; 3 in a row")
+            # min moves in a row
+            if curr is not src and dir != curr.entry and curr.n_dir < min_blocks:
+                logger.debug("next; not enough in a row")
                 continue
-            nx = curr.pos + dir
-            logger.debug(f"checking node ({int(nx.real)}, {int(nx.imag)})")
+            # max moves in a row
+            if dir == curr.entry and curr.n_dir >= max_blocks:
+                logger.debug("next; too many in a row")
+                continue
+            nx = curr + dir
+            # logger.debug(f"checking node ({int(nx.real)}, {int(nx.imag)})")
             # bounds check
             if 0 <= nx.real < ncols and 0 <= nx.imag < nrows:
                 # check if new dist is shorter
@@ -132,14 +146,26 @@ def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
                     prev[nx] = curr
                     nx.entry = dir
                     if dir == curr.entry:
-                        nx.n_dir = curr.entry + 1
-                    to_check.append(nx)
-                    logger.debug(f"updated dist: {alt}")
+                        nx.n_dir = curr.n_dir + 1
+                        logger.debug(
+                            f"n_dir updated; dir: {dir}\tentry: {curr.entry}\tndir: {nx.n_dir}"
+                        )
+                    if nx not in visited:
+                        # this needs to be checked so we do not re-add nodes
+                        # that were popped from to_check
+                        to_check.append(nx)
+                    logger.debug(f"updated dist for node {nx.pos}: {alt}")
             else:
                 logger.debug("next; outside or visited")
                 continue
         visited.add(curr)
+        # logger.debug(f'queue length: {len(to_check)}')
         # f = input()
+
+    if part_two:
+        # process our list of targets
+        real_target = min(targets, key=lambda t: dists[t])
+        return dists[real_target]
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -148,7 +174,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     if not sample:
         fp = "input.txt"
     else:
-        fp = "sample.txt"
+        fp = "sample2.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
@@ -156,7 +182,15 @@ def main(sample: bool, part_two: bool, loglevel: str):
     grid = [line.strip() for line in read_line(fp)]
     # execute
     tstart = time_ns()
-    dist = heat_loss_dijkstra(grid)
+    if part_two:
+        min_blocks = 4
+        max_blocks = 10
+    else:
+        min_blocks = 0
+        max_blocks = 3
+    dist = heat_loss_dijkstra(
+        grid, min_blocks=min_blocks, max_blocks=max_blocks, part_two=part_two
+    )
 
     # output
     logger.info(f"lowest heat loss: {dist}")
