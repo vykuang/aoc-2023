@@ -93,11 +93,8 @@ def count_energized(entry_beam, grid, max_x, max_y):
                 # logger.debug(f"new splits: {repr(split_beam)}")
                 # handle split beam
                 beams.append(split_beam)
-                # record split pos
-                # splits.update([split_beam.pos])
-        # if logger.isEnabledFor(logging.DEBUG):
-        #     logger.debug("beam complete")
-        #     logger.debug(f"num of beams: {len(beams)}")
+    #     logger.debug("beam complete")
+    #     logger.debug(f"num of beams: {len(beams)}")
 
     # node[1] selects `pos`
     energized = set([node[1] for node in Beam.traversed])

@@ -3,7 +3,9 @@ from pathlib import Path
 import argparse
 import logging
 import sys
+from dataclasses import dataclass
 from collections import defaultdict, deque
+from itertools import groupby
 from math import inf
 from time import time_ns
 
@@ -18,7 +20,49 @@ def read_line(fpath: str):
         yield from f
 
 
-def heat_loss_dijkstra(grid, src=0 + 0j):
+def all_equal(iterable):
+    "Returns True if all the elements are equal to each other."
+    g = groupby(iterable)
+    return next(g, True) and not next(g, False)
+
+
+@dataclass(eq=False)
+class Node:
+    pos: complex
+    entry: complex
+    dir_count: int = 0
+
+    @property
+    def real(self):
+        # computed attribute via @property
+        return int(self.pos.real)
+
+    @real.setter
+    def real(self, value):
+        # node.real = new_val assignment is already
+        # disallowed since this function only raises Exception
+        # but this provides a more specific message
+        raise Exception("read only")
+
+    @property
+    def imag(self):
+        return int(self.pos.imag)
+
+    @imag.setter
+    def imag(self, val):
+        raise Exception("read only")
+
+    def __hash__(self):
+        return hash((self.pos, self.entry))
+
+    def __sub__(self, other):
+        return self.pos - other.pos
+
+    def __add__(self, other):
+        return self.pos + other.pos
+
+
+def heat_loss_dijkstra(grid, src=0 + 0j, depth_limit=3):
     """ """
     ncols = len(grid[0])
     nrows = len(grid)
@@ -26,59 +70,69 @@ def heat_loss_dijkstra(grid, src=0 + 0j):
     # mark all vertices as inf (unvisited)
     dists = defaultdict(lambda: inf)
     # dist to source initialize to 0
+    src = Node(src, entry=0j)
     dists[src] = 0
+    # init all prev to None
     prev = defaultdict(lambda: None)
-    entry = defaultdict(lambda: 0j)
-    # dir_count = defaultdict(lambda: 0)
     visited = set()
     target = ncols - 1 + (nrows - 1) * 1j
+    # to_check = [col + row * 1j for row in range(nrows) for col in range(ncols)]
     to_check = [src]
     while to_check:
+        # retrieve node with min dist[node]
         to_check = sorted(to_check, key=lambda node: dists[node], reverse=True)
         curr = to_check.pop()
-        # logger.debug(f'current node: {int(curr.imag)}, {int(curr.real)}: {grid[int(curr.imag)][int(curr.real)]}')
+        if curr in visited:
+            continue
+        if curr.pos == target:
+            logger.info("target found")
+            # debug
+            node = curr
+            route = deque()
+            if prev[node] or node == src:
+                while node:
+                    route.appendleft(node)
+                    node = prev[node]
+            logger.info(f"route: {route}")
+            return dists[curr]
+        logger.debug(
+            f'{"-"*30}\ncurrent node: ({int(curr.real)}, {int(curr.imag)}): {grid[int(curr.imag)][int(curr.real)]}'
+        )
         # check adjacent nodes
         for dir in [-1, 1, 1j, -1j]:
-            # logger.debug(f'checking dir {dir}')
+            logger.debug(f"checking dir {dir}")
             # no reverse
-            if dir == -entry[curr]:
-                # logger.debug('next; reverse')
+            if prev[curr] is not None and dir == prev[curr] - curr:
+                logger.debug("next; reverse")
                 continue
             # max 3 in a row
-            # this logic is flawed since entry[] is only updated when dist is
-            if (
-                dir == entry[curr] == entry[prev[curr]] == entry[prev[prev[curr]]]
-            ):  # == entry[prev[prev[prev[curr]]]]:
-                # logger.debug('next; 3 in a row')
+            last_dirs = [dir]
+            depth = 0
+            node = curr
+            # prev[node] = 0j will skip this section,
+            # if not explicitly checking for "is not None"
+            while prev[node] is not None and depth < depth_limit:
+                last_dirs.append(node - prev[node])
+                node = prev[node]
+                depth += 1
+            if depth == depth_limit and all_equal(last_dirs):
+                logger.debug("next; 3 in a row")
                 continue
-            nx = curr + dir
-            # logger.debug(f'checking node {int(nx.imag)}, {int(nx.real)}')
-            if nx == target:
-                logger.info("target found")
-                dists[nx] = dists[curr] + int(grid[int(nx.imag)][int(nx.real)])
-                prev[nx] = curr
-                # debug
-                node = nx
-                route = deque()
-                if prev[node] or node == src:
-                    while node:
-                        route.appendleft(node)
-                        node = prev[node]
-                logger.info(f"route: {route}")
-                return dists[nx]
+            nx = curr.pos + dir
+            logger.debug(f"checking node ({int(nx.real)}, {int(nx.imag)})")
             # bounds check
-            elif 0 <= nx.real < ncols and 0 <= nx.imag < nrows and nx not in visited:
+            if 0 <= nx.real < ncols and 0 <= nx.imag < nrows:
                 # check if new dist is shorter
-                to_check.append(nx)
+                nx = Node(nx, dir)
                 alt = dists[curr] + int(grid[int(nx.imag)][int(nx.real)])
                 if alt < dists[nx]:
-                    # if so, update dist, prev, entry
+                    # if so, update dist, prev
                     dists[nx] = alt
                     prev[nx] = curr
-                    entry[nx] = dir
-                    # logger.debug(f'updated dist: {alt}')
+                    to_check.append(nx)
+                    logger.debug(f"updated dist: {alt}")
             else:
-                # logger.debug('next; outside or visited')
+                logger.debug("next; outside or visited")
                 continue
         visited.add(curr)
         # f = input()

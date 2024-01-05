@@ -746,7 +746,7 @@ Given a grid of 110 x 110, we have 108 * 4 + 4 corners * 2 = 442 candidates
      - no reverse: only fwd, left, or right, relative to current heading
 - problem: minimize heat loss
 
-### pathfinding with djikstra
+### pathfinding with dijkstra
 
 modifications:
 
@@ -767,3 +767,21 @@ Refresher:
 1. *update* the distance from origin to these child nodes, if the new distance is less than the existing
 1. once `dest` is marked is visited, we've determined the shortest path
     - calc the distance by tracing back parents
+
+### 3 in a row
+
+how do we check for 3 in a row if a child node could be added from somewhere else? Assume there is only one *shortest* path, there should be one definitive parent and its associated direction. But that `parent` could change if a new *shortest* path is found during search. And each node could have many different `entry_dir`, if not all, by being between source and other nodes. Dijkstra by default will record shortest path to *all* nodes, until target is found.
+
+So what we're looking for is not simply the parent node's entry, but the parent node's entry on this particular path. Since the route is important, we use `prev` to check for past direction.
+
+```sh
+entry[curr] = curr - prev[curr]
+# more generally
+entry = node - prev[node]
+```
+
+#### correction
+
+simply checking `curr - prev[curr]` is not enough. This method of checking somehow closes off child nodes that could provide a shorter path in the future. In effect it seems to be follow some local minimum without seeing the whole picture.
+
+The solution here is that instead of using only coordinates to identify each node, we need to assign direction, and for how many edges it's travelled in that direction. In practice this enlarges our search space from `(nrows, ncols)` to `(nrows, ncols, entry_dir, exit_dir)`, 2D to 4D space
