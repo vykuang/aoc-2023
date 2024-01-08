@@ -15,6 +15,32 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
+def parse_rules(line):
+    """
+    parse sorting rules with format:
+        <rule id>{part_comparison:new_rule,...,catchall}
+    catchall could be another rule id or R or A
+    comparison is one of [xmas], <|>, and some integer
+    The ordering of the parsed rules must be maintained
+    """
+    rule_idx = line.index('{')
+    ruleid = line[:rule_idx]
+    rules = line[rule_idx + 1: -1].split(',') # the offsets trim the {}
+    # look for <, >; otherwise catchall
+    for r in rules:
+        if (rte_idx := r.find(':')) > -1:
+            part = r[0]
+            rte = r[rte_idx+1:]
+            limit = r[2:rte_idx]
+            # next, determine comp op
+            if r.find('<') > -1:
+                next
+            elif r.find('>') > -1:
+                next
+        else:
+            # catchall route
+
+
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -27,6 +53,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
+    for line in read_line(fp):
+        # start parsing rules
+
 
     # execute
     tstart = time_ns()
