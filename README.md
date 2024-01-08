@@ -841,3 +841,23 @@ What we're interested in, then, is `i + b`: interior plus boundary integer point
 - each hex is comprised of dist (1st 5 hex digit) and the dir(last hex digit)
 - 0 - 3: R, D, L, U
 - find the lagoon area again
+
+## day 19 - following rules
+
+- rules modelled as `dict`
+    - key: label
+    - val: list of tuples
+        - tuple:
+            - part: {x,m,a,s}
+            - comp_op: '<' or '>'
+            - comp_arg: int
+            - dest: {A,R,<new_label>}
+- part as `dict` with key for each subpart
+- applying rule onto a part always result in one of
+    - new set of rules
+    - R
+    - A
+- apply recursively until `A` or `R` is returned
+- use `eval()` recursively
+
+### part two - combinations
