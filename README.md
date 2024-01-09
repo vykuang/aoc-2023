@@ -861,3 +861,16 @@ What we're interested in, then, is `i + b`: interior plus boundary integer point
 - use `eval()` recursively
 
 ### part two - combinations
+
+Instead of applying rules to individual parts, we apply rules to all possible ranges. Initial ranges: `{'x': [1, 4000], ..., 's': [1, 4000]}`
+
+- apply `in` to ranges
+- branching creates a new dict of ranges, with its own headings
+- e.g. after applying `x > 1000:pq`, there will be two set of ranges:
+    - `{x:[1, 1000], ..., s: [1,4000]}` continuing current set of rules
+    - `{x:[1001, 4000], ..., s: [1, 4000]}` rerouted to rule `pq`
+    - each set of ranges need also a `heading` key-val pair
+    - maintain list of these ranges
+    - new branches from rule application need to be returned, to be added to that list
+    - if any ranges of a part remains, keep going through current rules, branching off if necessary
+    - return branched parts at end of rules, or until no part ranges remain (is that possible?)

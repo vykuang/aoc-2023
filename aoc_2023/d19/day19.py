@@ -68,6 +68,24 @@ def apply_rule(part: dict, rule: dict) -> str:
             return subr.dest  # catchall
 
 
+def apply_range_rule(part: dict, rule: dict):
+    """
+    Apply rules to ranges of the part
+    Returns new part ranges based on rule branches
+    """
+    for subr in rule:
+        if subr.part:
+            # not catchall
+            comps = [eval(f"{subpart}{subr.op}{subr.arg}")
+                    for subpart in part[subr.part]]
+            if all(comps):
+                # true for both lower/upper; return whole part
+                return part, subr.dest
+            elif not any(comps):
+                # false for both; next rule
+                continue
+            else:
+                # look at the op
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
