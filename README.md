@@ -786,7 +786,22 @@ simply checking `curr - prev[curr]` is not enough. This method of checking someh
 
 The solution here is that instead of using only coordinates to identify each node, we need to assign direction, and for how many edges it's travelled in that direction. In practice this enlarges our search space from `(nrows, ncols)` to `(nrows, ncols, entry_dir, exit_dir)`, 2D to 4D space
 
-If I include `entry`, how do I prevent a local loop, since it's now recognized as a different node? It would, I just need to check that it's not in `visited` before I append to queue
+If I include `entry`, how do I prevent a local loop, since it's now recognized as a different node? It would, I just need to check that it's not in `visited` *and not in queue* before I append to queue. I also need to specifically assign which nodes are available.
+
+Starting from origin `(0, 0, dir=None, 0)`, it can access
+
+- `(1, 0, dir=1+0j, 1)`
+- `(0, 1, dir=0+1j, 1)`
+
+Another example. from `(1+2j, 1, 1)`:
+
+- `(1+1j, -1j, 1)`
+- `(1+3j, +1j, 1)`
+- `(2+2j, +1, 2)`
+
+In part two the only node available is the last one, since `n_dir`
+
+
 
 ### part 2 - ultra crucible
 

@@ -30,7 +30,7 @@ def all_equal(iterable):
 class Node:
     pos: complex
     entry: complex
-    n_dir: int = 1  # init to 1 when creating child nodes
+    n_dir: int = 0  # init to 1 when creating child nodes
 
     @property
     def real(self):
@@ -53,7 +53,7 @@ class Node:
         raise Exception("read only")
 
     def __hash__(self):
-        return hash((self.pos, self.entry))
+        return hash((self.pos, self.entry, self.n_dir))
 
     def __sub__(self, other):
         # only works between Nodes
@@ -67,6 +67,9 @@ class Node:
         else:
             raise ValueError("Not supported")
         return self.pos + addend
+
+    def __repr__(self) -> str:
+        return f"pos: {self.pos}\tentry: {self.entry}\tndir: {self.n_dir}"
 
 
 def heat_loss_dijkstra(
@@ -87,7 +90,7 @@ def heat_loss_dijkstra(
     target = ncols - 1 + (nrows - 1) * 1j
     # to_check = [col + row * 1j for row in range(nrows) for col in range(ncols)]
     to_check = [src]
-    targets = []
+    dirs = [-1 + 0j, 1 + 0j, 1j, -1j]
     while to_check:
         # retrieve node with min dist[node]
         to_check = sorted(to_check, key=lambda node: dists[node], reverse=True)
@@ -95,18 +98,19 @@ def heat_loss_dijkstra(
         if curr in visited:
             continue
         if curr.pos == target:
-            logger.info("potential target found")
+            logger.info(f"potential target found: {dists[curr]}")
             if part_two:
-                logger.info(f"n_dir: {curr.n_dir}")
                 if curr.n_dir < min_blocks:
                     # not enough to satisfy min movements;  discard
                     continue
                 else:
-                    targets.append(curr)
-                    logger.info(f"{len(targets)} potential target saved")
-                    continue
-
+                    # due to our sorting (aka priority queue) the target
+                    # that comes up is necessarily the shortest dist
+                    # targets.append(curr)
+                    # logger.info(f"{len(targets)} potential target saved")
+                    return dists[curr]
             else:
+                # part 1
                 node = curr
                 route = deque()
                 if prev[node] or node == src:
@@ -115,57 +119,52 @@ def heat_loss_dijkstra(
                         node = prev[node]
                 logger.info(f"route: {route}")
                 return dists[curr]
-        logger.debug(
-            f'{"-"*30}\ncurrent node: ({curr.real}, {curr.imag}, {curr.entry}): {grid[curr.imag][curr.real]}'
-        )
+        # logger.debug(f'{"-"*30}\ncurrent node: {curr}: {grid[curr.imag][curr.real]}')
         # check adjacent nodes
-        for dir in [-1 + 0j, 1 + 0j, 1j, -1j]:
+        for dir in dirs:
             # logger.debug(f"checking dir {dir}")
             # no reverse
             if prev[curr] is not None and dir == prev[curr] - curr:
                 logger.debug("next; reverse")
                 continue
-            # min moves in a row
-            if curr is not src and dir != curr.entry and curr.n_dir < min_blocks:
-                logger.debug("next; not enough in a row")
-                continue
             # max moves in a row
             if dir == curr.entry and curr.n_dir >= max_blocks:
                 logger.debug("next; too many in a row")
                 continue
+            # min moves in a row
+            if curr != src and dir != curr.entry and curr.n_dir < min_blocks:
+                # src has dir=0j
+                logger.debug("next; not enough in a row")
+                continue
+            if dir == curr.entry:
+                # increment n_dir; assign before using dists[nx]
+                # to maintain same hash
+                n_dir = curr.n_dir + 1
+            else:
+                n_dir = 1
             nx = curr + dir
-            # logger.debug(f"checking node ({int(nx.real)}, {int(nx.imag)})")
             # bounds check
             if 0 <= nx.real < ncols and 0 <= nx.imag < nrows:
                 # check if new dist is shorter
-                nx = Node(nx, dir)
+                nx = Node(nx, dir, n_dir)
                 alt = dists[curr] + int(grid[nx.imag][nx.real])
+                # logger.debug(f"alt: {alt}\t current dist: {dists[nx]}")
                 if alt < dists[nx]:
                     # if so, update dist, prev
                     dists[nx] = alt
                     prev[nx] = curr
                     nx.entry = dir
-                    if dir == curr.entry:
-                        nx.n_dir = curr.n_dir + 1
-                        logger.debug(
-                            f"n_dir updated; dir: {dir}\tentry: {curr.entry}\tndir: {nx.n_dir}"
-                        )
+                    # logger.debug(f"nx: {nx}\tdist: {alt}")
                     if nx not in visited:
                         # this needs to be checked so we do not re-add nodes
                         # that were popped from to_check
+                        # logger.debug(f'added to queue')
                         to_check.append(nx)
-                    logger.debug(f"updated dist for node {nx.pos}: {alt}")
             else:
                 logger.debug("next; outside or visited")
                 continue
         visited.add(curr)
-        # logger.debug(f'queue length: {len(to_check)}')
         # f = input()
-
-    if part_two:
-        # process our list of targets
-        real_target = min(targets, key=lambda t: dists[t])
-        return dists[real_target]
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -174,7 +173,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     if not sample:
         fp = "input.txt"
     else:
-        fp = "sample2.txt"
+        fp = "sample.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
