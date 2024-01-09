@@ -817,3 +817,75 @@ more movement constraint:
     - 14 possible targets
 - max 10 blocks
     - change from 3 to 10
+
+## day 18 - filling in polygons, er I mean trenches
+
+- input is lines of `<dir> <len> (#<RGB_code>)`
+- unit of dig is 1 m3
+- e.g. `R 2 (#23F5AE)`
+
+### part 1 - shoelace formula
+
+given a planar polygon with vertices in cartesian coordinates, ordered CCW or CW (result will be negative):
+
+
+### implementing shoelace
+
+1. For each line of input, record the `dir`, `length`, and `rgb_code`; maintain the sequential order
+1. shoelace requires cartesian coords, so we start at (0, 0), or (0j), and build our sequence of points
+    - P0 = (0, 0)
+    - process `R 6 ...`
+    - append point `P1 = (6, 0) = 6+0j`
+    - colors, which apply to edges, will be keyed to the ending vertex, in this case P1, since that's on the same line in the input
+    - dict of integers, from 0 - N, with namedtuples as values, having keys for
+        - `vertex`
+        - `rgb_code`
+
+### incorporating Pick's theorem
+
+So shoelace finds us the polygonal area, but we're actually interested in *number of integer points interior to the integer coordinates*, which leads us to Pick: `A = i + b/2 - 1`, where
+
+- A: area
+- i: interior points
+- b: number of integer points on the boundary
+
+What we're interested in, then, is `i + b`: interior plus boundary integer points. Rearranged, Pick's give us `i + b = A + b/2 + 1`. Find A with shoelace
+
+### part 2 - rgb as distance
+
+- each hex is comprised of dist (1st 5 hex digit) and the dir(last hex digit)
+- 0 - 3: R, D, L, U
+- find the lagoon area again
+
+## day 19 - following rules
+
+- rules modelled as `dict`
+    - key: label
+    - val: list of tuples
+        - tuple:
+            - part: {x,m,a,s}
+            - comp_op: '<' or '>'
+            - comp_arg: int
+            - dest: {A,R,<new_label>}
+- part as `dict` with key for each subpart
+- applying rule onto a part always result in one of
+    - new set of rules
+    - R
+    - A
+- apply recursively until `A` or `R` is returned
+- use `eval()` recursively
+
+### part two - combinations
+
+Instead of applying rules to individual parts, we apply rules to all possible ranges. Initial ranges: `{'x': [1, 4000], ..., 's': [1, 4000]}`
+
+- apply `in` to ranges
+- branching creates a new dict of ranges, with its own headings
+- e.g. after applying `x > 1000:pq`, there will be two set of ranges:
+    - `{x:[1, 1000], ..., s: [1,4000]}` continuing current set of rules
+    - `{x:[1001, 4000], ..., s: [1, 4000]}` rerouted to rule `pq`
+    - each set of ranges need also a `heading` key-val pair
+    - maintain list of these ranges
+    - new branches from rule application need to be returned, to be added to that list
+    - if any ranges of a part remains, keep going through current rules, branching off if necessary
+    - return branched parts at end of rules, or until no part ranges remain (is that possible?)
