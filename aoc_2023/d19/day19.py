@@ -37,7 +37,7 @@ def parse_rules(line):
             part = r[0]
             op = r[1]  # use eval
             dest = r[rte_idx + 1 :]
-            arg = r[2:rte_idx]
+            arg = int(r[2:rte_idx])
             parsed_rules.append(Rule(part, op, arg, dest))
         else:
             # catchall route
@@ -73,19 +73,40 @@ def apply_range_rule(part: dict, rule: dict):
     Apply rules to ranges of the part
     Returns new part ranges based on rule branches
     """
+    parts = {}
     for subr in rule:
         if subr.part:
             # not catchall
-            comps = [eval(f"{subpart}{subr.op}{subr.arg}")
-                    for subpart in part[subr.part]]
+            logger.debug(f"rule: {subr}\n part: {part}")
+            comps = [
+                eval(f"{subpart}{subr.op}{subr.arg}") for subpart in part[subr.part]
+            ]
             if all(comps):
                 # true for both lower/upper; return whole part
-                return part, subr.dest
+                logger.debug(f"both true; send to {subr.dest}")
+                parts |= {subr.dest: part}
+                break
             elif not any(comps):
                 # false for both; next rule
+                logger.debug("none true; next rule")
                 continue
             else:
+                # change only subr.part's values
+                split = part.copy()
                 # look at the op
+                if subr.op == "<":
+                    split[subr.part] = [part[subr.part][0], subr.arg - 1]
+                    part[subr.part] = [subr.arg, part[subr.part][1]]
+                else:
+                    # '>'
+                    split[subr.part] = [subr.arg + 1, part[subr.part][1]]
+                    part[subr.part] = [part[subr.part][0], subr.arg]
+                parts |= {subr.dest: split}
+        else:
+            parts |= {subr.dest: part}
+    return parts
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
@@ -98,13 +119,17 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # read input
     rules = {}
-    parts = []
+    if not part_two:
+        parts = []
     read_rules = True
     for line in read_line(fp):
         # start parsing rules
         logger.debug(f"line: {line}")
         if not line.strip():
             # empty lines separate rules and parts
+            if part_two:
+                # read only the rules
+                break
             read_rules = False
             continue
         elif read_rules:
@@ -114,22 +139,50 @@ def main(sample: bool, part_two: bool, loglevel: str):
             parts.append(parse_parts(line.strip()))
 
     logger.debug(f"rules: {rules}")
-    logger.debug(f"parts: {parts}")
+    if not part_two:
+        logger.debug(f"parts: {parts}")
 
     # execute
     tstart = time_ns()
-    part_sums = []
-    for part in parts:
-        # follow rules for each part, starting with rules['in']
+    if part_two:
+        accept = []
         rule_id = "in"
-        while rule_id not in ["R", "A"]:
-            rule_id = apply_rule(part, rules[rule_id])
-        if rule_id == "A":
-            part_sums.append(sum(part.values()))
-            logger.debug(f"accept part {part}\tnew sums: {part_sums}")
+        part_min = 1
+        part_max = 4000
+        parts = {rule_id: {letter: [part_min, part_max] for letter in "xmas"}}
 
-    # output
-    logger.info(f"sums: {sum(part_sums)}")
+        while parts:
+            for rule_id, part in parts.items():
+                new_parts = apply_range_rule(part, rules[rule_id])
+                for dest in new_parts:
+                    # process 'A' and 'R's
+                    if dest == "A":
+                        accept.append(new_parts[dest])
+                        del new_parts[dest]
+                    elif dest == "R":
+                        del new_parts[dest]
+                    else:
+                        continue
+
+            logger.debug(f"new parts: {new_parts}")
+            for dest in new_parts:
+                if dest == "A":
+                    accept.append(part)
+                    del new_parts
+
+    else:
+        part_sums = []
+        for part in parts:
+            # follow rules for each part, starting with rules['in']
+            rule_id = "in"
+            while rule_id not in ["R", "A"]:
+                rule_id = apply_rule(part, rules[rule_id])
+            if rule_id == "A":
+                part_sums.append(sum(part.values()))
+                logger.debug(f"accept part {part}\tnew sums: {part_sums}")
+
+        # output
+        logger.info(f"sums: {sum(part_sums)}")
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
