@@ -5,6 +5,7 @@ import logging
 import sys
 from time import time_ns
 from collections import namedtuple
+from functools import reduce
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -77,7 +78,8 @@ def apply_range_rule(part: dict, rule: dict):
     for subr in rule:
         if subr.part:
             # not catchall
-            logger.debug(f"rule: {subr}\n part: {part}")
+            logger.debug(f"part: {part}")
+            logger.debug(f"rule: {subr}")
             comps = [
                 eval(f"{subpart}{subr.op}{subr.arg}") for subpart in part[subr.part]
             ]
@@ -102,7 +104,9 @@ def apply_range_rule(part: dict, rule: dict):
                     split[subr.part] = [subr.arg + 1, part[subr.part][1]]
                     part[subr.part] = [part[subr.part][0], subr.arg]
                 parts |= {subr.dest: split}
+                logger.debug(f"split: {split}")
         else:
+            logger.debug(f"sending {part} to {subr.dest}")
             parts |= {subr.dest: part}
     return parts
 
@@ -124,7 +128,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     read_rules = True
     for line in read_line(fp):
         # start parsing rules
-        logger.debug(f"line: {line}")
+        # logger.debug(f"line: {line}")
         if not line.strip():
             # empty lines separate rules and parts
             if part_two:
@@ -138,9 +142,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
             # read parts now
             parts.append(parse_parts(line.strip()))
 
-    logger.debug(f"rules: {rules}")
-    if not part_two:
-        logger.debug(f"parts: {parts}")
+    # logger.debug(f"rules: {rules}")
+    # if not part_two:
+    #     logger.debug(f"parts: {parts}")
 
     # execute
     tstart = time_ns()
@@ -153,22 +157,25 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
         while parts:
             for rule_id, part in parts.items():
+                logger.debug(f"\n\napplying {rule_id} to {part}")
                 new_parts = apply_range_rule(part, rules[rule_id])
-                for dest in new_parts:
-                    # process 'A' and 'R's
-                    if dest == "A":
-                        accept.append(new_parts[dest])
-                        del new_parts[dest]
-                    elif dest == "R":
-                        del new_parts[dest]
-                    else:
-                        continue
+                # process 'A' and 'R's; only 1 A/R per rule
+                if "A" in new_parts:
+                    logger.debug(f'accept: {new_parts["A"]}')
+                    accept.append(new_parts["A"])
+                    del new_parts["A"]
+                if "R" in new_parts:
+                    del new_parts["R"]
+            # removed all A and Rs
+            parts = new_parts
 
-            logger.debug(f"new parts: {new_parts}")
-            for dest in new_parts:
-                if dest == "A":
-                    accept.append(part)
-                    del new_parts
+        # after all parts are sorted to A/R:
+        logger.debug(f"accepts:\n{accept}")
+        # num_poss = reduce(lambda x, y: x * (y[1]-y[0]+1), accept, 1)
+        num_poss = 0
+        for p in accept:
+            num_poss += reduce(lambda x, y: x * (y[1] - y[0] + 1), list(p.values()), 1)
+        logger.info(f"num possibilities: {num_poss}")
 
     else:
         part_sums = []

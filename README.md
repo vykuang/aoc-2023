@@ -889,3 +889,5 @@ Instead of applying rules to individual parts, we apply rules to all possible ra
     - new branches from rule application need to be returned, to be added to that list
     - if any ranges of a part remains, keep going through current rules, branching off if necessary
     - return branched parts at end of rules, or until no part ranges remain (is that possible?)
+167409079868000
+85928955440000
