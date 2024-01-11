@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+Represent our part ranges with namedtuples instead of using dict
+"""
 from pathlib import Path
 import argparse
 import logging
@@ -6,11 +9,28 @@ import sys
 from time import time_ns
 from collections import namedtuple
 from functools import reduce
+from dataclasses import dataclass, astuple
+from copy import copy
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 Rule = namedtuple("Rule", "part op arg dest", defaults=["", "", None, ""])
+
+
+# Part = namedtuple("Part", "x m a s")
+@dataclass
+class Part:
+    x: list
+    m: list
+    a: list
+    s: list
+
+    def __copy__(self):
+        return Part(self.x, self.m, self.a, self.s)
+
+    def calc_poss(self):
+        return reduce(lambda x, y: x * (y[1] - y[0] + 1), astuple(self), 1)
 
 
 def read_line(fpath: str):
@@ -69,7 +89,7 @@ def apply_rule(part: dict, rule: dict) -> str:
             return subr.dest  # catchall
 
 
-def apply_range_rule(part: dict, rule: list) -> list:
+def apply_range_rule(part: tuple, rule: list) -> list:
     """
     Apply rules to ranges of the part
     Returns new part ranges based on rule branches
@@ -96,7 +116,8 @@ def apply_range_rule(part: dict, rule: list) -> list:
             logger.debug(f"part: {part}")
             logger.debug(f"rule: {subr}")
             comps = [
-                eval(f"{subpart}{subr.op}{subr.arg}") for subpart in part[subr.part]
+                eval(f"{subpart}{subr.op}{subr.arg}")
+                for subpart in getattr(part, subr.part)
             ]
             if all(comps):
                 # true for both lower/upper; return whole part
@@ -109,15 +130,16 @@ def apply_range_rule(part: dict, rule: list) -> list:
                 continue
             else:
                 # change only subr.part's values
-                split = part.copy()
+                r_lower, r_upper = getattr(part, subr.part)
+                split = copy(part)
                 # look at the op
                 if subr.op == "<":
-                    split[subr.part] = [part[subr.part][0], subr.arg - 1]
-                    part[subr.part] = [subr.arg, part[subr.part][1]]
+                    setattr(split, subr.part, [r_lower, subr.arg - 1])
+                    setattr(part, subr.part, [subr.arg, r_upper])
                 else:
                     # '>'
-                    split[subr.part] = [subr.arg + 1, part[subr.part][1]]
-                    part[subr.part] = [part[subr.part][0], subr.arg]
+                    setattr(split, subr.part, [subr.arg + 1, r_upper])
+                    setattr(part, subr.part, [r_lower, subr.arg])
                 parts.append({subr.dest: split})
                 logger.debug(f"split: {split}")
         else:
@@ -169,7 +191,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
         rule_id = "in"
         part_min = 1
         part_max = 4000
-        parts = {rule_id: {letter: [part_min, part_max] for letter in "xmas"}}
+        xmas_rng = [[part_min, part_max] for i in range(4)]
+        # parts = {rule_id: {letter: [part_min, part_max] for letter in "xmas"}}
+        parts = {rule_id: Part(*xmas_rng)}
 
         while parts:
             logger.debug(f"\n\nparts to check: {parts}")
@@ -193,10 +217,11 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
         # accept: list[dict]
         logger.debug(f"{len(accept)} accepts:\n{accept}")
-        # num_poss = reduce(lambda x, y: x * (y[1]-y[0]+1), accept, 1)
-        num_poss = 0
-        for p in accept:
-            num_poss += reduce(lambda x, y: x * (y[1] - y[0] + 1), list(p.values()), 1)
+        # num_poss = 0
+        # for p in accept:
+        #     num_poss += reduce(lambda x, y: x * (y[1] - y[0] + 1), list(p.values()), 1)
+        num_poss = sum([p.calc_poss() for p in accept])
+
         logger.info(f"num possibilities: {num_poss}")
 
     else:

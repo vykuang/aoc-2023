@@ -889,5 +889,9 @@ Instead of applying rules to individual parts, we apply rules to all possible ra
     - new branches from rule application need to be returned, to be added to that list
     - if any ranges of a part remains, keep going through current rules, branching off if necessary
     - return branched parts at end of rules, or until no part ranges remain (is that possible?)
-167409079868000
-85928955440000
+
+### data modelling woes
+
+Had a rough time trying to model the data structure here, while keeping the processing logic uncluttered. Don't think I was successful, with the frequent `list(p.values())` calls. Could have benefitted from `dataclass` or perhaps just `namedtuple` to store my `part = {'x': [min, max], ...}`
+
+Settled on using `@dataclass` for its mutability, and being able to implement `__copy__` via `from copy import copy` module, *and* ease of `setattr` and `getattr`. However the benefit of arguably better readability is offset by 50% increase in computation time
