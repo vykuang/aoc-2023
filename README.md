@@ -895,3 +895,95 @@ Instead of applying rules to individual parts, we apply rules to all possible ra
 Had a rough time trying to model the data structure here, while keeping the processing logic uncluttered. Don't think I was successful, with the frequent `list(p.values())` calls. Could have benefitted from `dataclass` or perhaps just `namedtuple` to store my `part = {'x': [min, max], ...}`
 
 Settled on using `@dataclass` for its mutability, and being able to implement `__copy__` via `from copy import copy` module, *and* ease of `setattr` and `getattr`. However the benefit of arguably better readability is offset by 50% increase in computation time
+
+## day 20 - flip flop pulses
+
+- modules communicate with pulses
+- low vs high pulse
+- modules send to destination modules
+    - flip-flop, %: on/off, default `OFF`. low pulse toggles on/off, and then it sends a pulse representing new current state. if it was `OFF`, receiving a `LO` pulse triggers it to turn `ON` and send a `HI` pulse
+    - conjunction, &:
+        - remembers most recent pulse received from input modules
+        - defaults to `LO`
+        - when all pulses remembered are `HI`, send a `LO` pulse
+        - otherwise, send `HI`
+    - broadcast
+        - only one
+        - repeats the input pulse to all destination modules
+        - initiates our network with a `LO` pulse
+        - can only initiate after all pulses are processed
+- all pulses processed in order
+s
+### part 1 - simulating the network
+
+- count number of `HI` and `LO` pulses after 1000 button pushes, including pulses from button push
+    - i.e. min 1000 `LO` pulses
+- each cycle may triggle varying amounts of pulses, due to the flip-flops and conj modules remembering their states
+- those number of pulses may very well be cyclic
+
+#### modelling the pulse network
+
+- each node has:
+    - type: flip-flop (`ff`), conjunction (`cnj`), and broadcast (`b`)
+    - list of destination node
+- flip-flop has additional attr: `ON/OFF`
+- `cnj` must remember last pulse of each input module
+    - can these input modules be assigned as we're reading the input?
+    - each line specifies all destination nodes
+    - what we don't know ahead is whether those are conjunctions, which are relevant, or flips, which do not care about input nodes
+    - run two passes? one for all node, types, and dests, another to record the input nodes
+- `pulse` should be modelled with
+    - `LO: bool = {0, 1}`
+    - `input: Module`
+    - `dest: Module`
+    - put these in a queue as modules process each pulse
+
+Step-by-step:
+
+1. `button` initiates `LO` to its dest: `broadcaster`
+1. no other senders; start processing pulses
+1. For each `input`, `pulse`, and `dest` in queue:
+    1. `button - LO -> broadcaster` repeats pulse to all its `dest` modules
+        - increment `LO` pulse counter
+        - call `bc.process(0)`
+        - bc repeats pulse, so append `(bc, 0, dest) for dest in self.dests` to pulse queue
+        - `.process()` could return those pulses and extend an external queue?
+        - try class attribute since `network` is already one
+    1. `bc, 0, a`
+        - `a.process(bc, 0)`
+        - since `a` is `flip`, `bc` is irrelevant; discard
+        - because `flip`, and was `0`, flip to `1` state
+        - returns `(a, 1, b)`
+
+### part two - looking for a specific node
+
+look for the lowest number of button presses for a `LO` pulse to reach `rx`
+
+This seems even easier than part 1?
+
+`rx` is only a receiver module, like `output` in sample2
+
+Looking at the data:
+
+- &dr feeds `rx`
+- 4 different flip-flips feed &dr
+- for LO to hit rx, all 4 flip-flops need to send HI to &dr
+- find num_cycles for each of those input flip-flops to send HI, and find the LCM
+- otherwise it might just take a very long time
+    - no result after almost 2h
+- look for how many cycles it takes to activate each of the 4 following flipflops:
+    - mp
+    - qt
+    - qb
+    - ng
+- *those* in turn receives from only one module:
+    - dx
+    - ck
+    - cs
+    - jh
+- *these* then only receive from flipflops. Therefore when `rx` receives `LO`, all inputs to the above 4 must be `HI`, so that dx, ..., jh sends `LO`, triggering the `mp` set to send `HI`, then `dr` to send `LO` to rx
+- check when the first batch receives the first `LO` signal, then find LCM for the 4 cycle numbers
+
+## day 21 - step counter
+
+In a garden of plots (`.`) and rocks (`#`), given a starting point `S`, how many plots can be reached in a given number of steps

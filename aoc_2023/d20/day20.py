@@ -5,6 +5,7 @@ import logging
 import sys
 from collections import deque, namedtuple, defaultdict
 from time import time_ns
+from functools import reduce
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -20,15 +21,16 @@ class Module:
     # shared amongst modules
     queue = deque()
 
-    def __init__(self, inputs: list = [], dests: list = []) -> None:
+    def __init__(self, name: str = None, inputs: list = [], dests: list = []) -> None:
+        self.name = name
         self.inputs = inputs
         self.dests = dests
 
-    def process_pulse(self, pulse: bool, *args, **kwargs):
+    def process_pulse(self, name, pulse: bool, *args, **kwargs):
         """
         Basic process re-emits the same pulse
         """
-        Module.queue.extend([Pulse(self.name, pulse, dest) for dest in self.dests])
+        Module.queue.extend([Pulse(name, pulse, dest) for dest in self.dests])
 
     def __repr__(self) -> str:
         return f"inputs: {self.inputs}\tdests: {self.dests}"
@@ -42,16 +44,16 @@ class Flip(Module):
     Denoted by %
     """
 
-    def __init__(self, inputs: list = [], dests: list = []) -> None:
-        super().__init__(inputs, dests)
+    def __init__(self, name: str = None, inputs: list = [], dests: list = []) -> None:
+        super().__init__(name, inputs, dests)
         self.state = False
 
-    def process_pulse(self, pulse, *args, **kwargs):
+    def process_pulse(self, name, pulse, *args, **kwargs):
         if not pulse:
             # only handle LO
             # flip state
             self.state = not self.state
-            super().process_pulse(self.state)
+            super().process_pulse(name, self.state)
 
 
 class Conjunction(Module):
@@ -62,16 +64,25 @@ class Conjunction(Module):
     Denoted by &
     """
 
-    def __init__(self, inputs: list = [], dests: list = []) -> None:
-        super().__init__(inputs, dests)
+    def __init__(self, name: str = None, inputs: list = [], dests: list = []) -> None:
+        super().__init__(name, inputs, dests)
         self._last_inputs = {}
 
-    def process_pulse(self, pulse, inp):
+    def add_input(self, inp: str):
+        """
+        Append to our list of inputs, *and* initialize them in _last_inputs dict
+        """
+        self.inputs.append(inp)
+        self._last_inputs[inp] = 0
+
+    def process_pulse(self, name, pulse, inp):
         # update last inputs
-        self._last_inputs[inp] = pulse
+        if inp in self.inputs:
+            self._last_inputs[inp] = pulse
+        # logger.debug(f'Conj module {name} last inputs: {self._last_inputs}')
         # check if all HI > send HI; else LO
-        pulse = 1 if all(self._last_inputs.values()) else 0
-        super().process_pulse(pulse)
+        pulse = 0 if all(self._last_inputs.values()) else 1
+        super().process_pulse(name, pulse)
 
 
 def read_line(fpath: str):
@@ -81,13 +92,15 @@ def read_line(fpath: str):
         yield from f
 
 
-def main(sample: bool, part_two: bool, loglevel: str):
+def main(sample: bool, part_two: bool, loglevel: str, n_cycles: int = 1000):
     """ """
     logger.setLevel(loglevel)
     if not sample:
         fp = "input.txt"
+        target = "rx"
     else:
-        fp = "sample.txt"
+        fp = "sample2.txt"
+        target = "output"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
@@ -112,27 +125,47 @@ def main(sample: bool, part_two: bool, loglevel: str):
     for m in network:
         # append m to input for each dest
         for dest in network[m].dests:
-            if isinstance(network[dest], Conjunction):
-                network[dest].inputs.append(m)
+            if dest in network and isinstance(network[dest], Conjunction):
+                network[dest].add_input(m)
 
-    logger.debug(f"{network}")
+    # part 2 target inputs are the 4 conj
+    # that send to the conjunction before target; last needs to send LO
+    # if all *those* inputs are ON then
+    target_inputs = ["mp", "qt", "qb", "ng"]
+    # target_inputs = ['dx', 'ck', 'cs', 'jh']
     # execute
     tstart = time_ns()
 
-    src = Pulse("button", False, "broadcaster")
+    src = Pulse("button", 0, "broadcaster")
     n_lo = 0
     n_hi = 0
-    Module.queue.append(src)
-    while Module.queue:
+    n_cycles = 0
+    target_cycles = []
+    while target_inputs:
+        if not Module.queue:
+            Module.queue.append(src)
+            n_cycles += 1
+            logger.debug(f"cycle {n_cycles}")
         pulse = Module.queue.popleft()
+        logger.debug(f"pulse: {pulse}")
         if pulse.state:
             n_hi += 1
         else:
             n_lo += 1
-        network[pulse.dest].process_pulse(pulse.state, pulse.input)
+            if pulse.dest in target_inputs:
+                logger.info(
+                    f"{pulse.input} -{pulse.state}-> {pulse.dest} at cycle {n_cycles}"
+                )
+                target_cycles.append(n_cycles)
+                target_inputs.remove(pulse.dest)
+        network[pulse.dest].process_pulse(pulse.dest, pulse.state, pulse.input)
 
     # output
-    logger.info(f"lo: {n_lo}\thi: {n_hi}")
+    if part_two:
+        target_cycle = reduce(lambda x, y: x * y, target_cycles, 1)
+        logger.info(f"target cycle: {target_cycle}")
+    else:
+        logger.info(f"lo: {n_lo}\thi: {n_hi}\tprod: {n_lo * n_hi}")
 
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
