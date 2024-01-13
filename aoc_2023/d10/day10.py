@@ -8,24 +8,23 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # char of each pipe shape; use imag plane to denote north/south
-pipe_open = dict(
-    # h=[-1, 1],
-    # v=[1j, -1],
-    F=[1, -1j],
-    # 7=[-1, -1j],
-    J=[1j, -1],
-    L=[1, 1j],
-    S=[1j, 1, -1j, -1],
-    # insert rest of pipe shapes
-)
-pipe_open.update({"7": [-1, -1j], "-": [-1, 1], "|": [1j, -1j]})
+pipe_open = {
+    "F": [1, 1j],
+    "7": [-1, 1j],
+    "J": [-1j, -1],
+    "L": [1, -1j],
+    "S": [1j, 1, -1j, -1],
+    "-": [-1, 1],
+    "|": [1j, -1j],
+}
+
 # compatible pipe shapes for each direction
-# shapes belonging to 1j (north) means that if we
+# shapes belonging to -1j (north) means that if we
 # look north, these are the shapes that are compatible
 compatible = {
-    1j: ["S", "|", "7", "F"],
+    -1j: ["S", "|", "7", "F"],  # looking north
     1: ["S", "-", "7", "J"],
-    -1j: ["S", "|", "J", "L"],
+    1j: ["S", "|", "J", "L"],
     -1: ["S", "-", "F", "L"],
 }
 
@@ -117,6 +116,22 @@ def transpose(c: complex) -> complex:
     return complex(-c.imag, -c.real)
 
 
+def calc_polygon_area(vertices: list) -> int:
+    """
+    append the first to complete the formula in one convenient loop
+    """
+    num_vertices = len(vertices)
+    vertices.append(vertices[0])
+    area = sum(
+        [
+            vertices[i].real * vertices[i + 1].imag
+            - vertices[i].imag * vertices[i + 1].real
+            for i in range(num_vertices)
+        ]
+    )
+    return abs(area / 2)
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """
     Pathfinding?
@@ -130,12 +145,10 @@ def main(sample: bool, part_two: bool, loglevel: str):
     """
 
     logger.setLevel(loglevel)
-    if not sample:
-        fp = "input.txt"
-    elif part_two:
-        fp = "sample2.txt"
-    else:
+    if sample:
         fp = "sample.txt"
+    else:
+        fp = "input.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
@@ -143,7 +156,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     s_row = s_col = 0
     for y, row in enumerate(read_line(fp)):
         for x, ch in enumerate(row):
-            pos = x + y * (-1j)
+            pos = x + y * 1j
             pipe_map |= {pos: ch}
             # find 'S'
             if ch == "S":
@@ -155,29 +168,36 @@ def main(sample: bool, part_two: bool, loglevel: str):
     step = 0
     d = None
     path_map = []
+    vertices = []
     while not (curr == "S" and step):
         curr, pos_curr, d = find_next_pipe(curr, pos_curr, pipe_map, d)
-        if part_two:
+        if part_two and curr in "7LJF":
             # collect all pos
-            path_map.append(pos_curr)
-        step += 1
-        if not part_two:
+            # path_map.append(pos_curr)
+            # collect all elbows, i.e. vertices
+            vertices.append(pos_curr)
             logger.debug(f"step {step}\tshape {curr}\tpos {pos_curr}")
+        step += 1
     if part_two:
-        # iterate over all rows of bounding box
-        xs = [int(p.real) for p in path_map]
-        ys = [int(p.imag) for p in path_map]
-        left_x = min(xs)
-        right_x = max(xs) + 1
-        top_y = max(ys) + 1
-        bot_y = min(ys)
-        logger.debug(f"bounding box: {left_x}, {bot_y} to {right_x}, {top_y}")
-        inside_hscan = scanrow(left_x, right_x, bot_y, top_y, pipe_map, path_map)
-        inside_vscan = scancol(left_x, right_x, bot_y, top_y, pipe_map, path_map)
-        logger.debug(f"hscan: {inside_hscan}\nvscan: {inside_vscan}")
-        inside_nodes = set(inside_hscan).intersection(set(inside_vscan))
-        n_in = len(inside_nodes)
-        logger.info(f"points inside: {n_in}")
+        logger.info(f"{len(vertices)} vertices found")
+        # find A using shoelace, then i using Pick's
+        area = calc_polygon_area(vertices)
+        logger.info(f"area: {area}\tstep: {step}")
+        interior = area - step // 2 + 1
+        # # iterate over all rows of bounding box
+        # xs = [int(p.real) for p in path_map]
+        # ys = [int(p.imag) for p in path_map]
+        # left_x = min(xs)
+        # right_x = max(xs) + 1
+        # top_y = max(ys) + 1
+        # bot_y = min(ys)
+        # logger.debug(f"bounding box: {left_x}, {bot_y} to {right_x}, {top_y}")
+        # inside_hscan = scanrow(left_x, right_x, bot_y, top_y, pipe_map, path_map)
+        # inside_vscan = scancol(left_x, right_x, bot_y, top_y, pipe_map, path_map)
+        # logger.debug(f"hscan: {inside_hscan}\nvscan: {inside_vscan}")
+        # inside_nodes = set(inside_hscan).intersection(set(inside_vscan))
+        # n_in = len(inside_nodes)
+        logger.info(f"points inside: {interior - (interior % 1)}")
 
     else:
         logger.info(f"furthest point: {step//2}")
