@@ -420,6 +420,23 @@ This requires our initial pathfinding to record the `pos` of each pipe, which is
 
 Not really working the way I expected.
 
+Coming back from day 18, it's a combination of shoelace algorithm, which determines the polygon *area*, and Pick's algorithm, which finds integer coordinates within enclosed area
+
+Pick's:
+
+$$A = i + b/2 - 1$$
+
+we're interested in $i$, number of integer points interior to the polygon. Need A, polygon area, and b, perimeter to solve.
+
+- $b$: count our input
+- $A$: use shoelace
+
+Shoelace:
+
+$$2A = \sum{n}{i=1}(x_iy_{i+1} - x_{i+1}y_i)$$
+
+where $(x_i, y_i)$ are vertices of the polygon *in CCW orientation*
+
 ## day 11 - grid expansion - cartesian distances
 
 - `.` is empty space
