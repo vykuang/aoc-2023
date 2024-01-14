@@ -987,3 +987,48 @@ Looking at the data:
 ## day 21 - step counter
 
 In a garden of plots (`.`) and rocks (`#`), given a starting point `S`, how many plots can be reached in a given number of steps
+
+- first thought - bfs to collect all nodes visited after `n_steps`
+- however, problem is interested in the exact node of the last step
+- not all visited nodes may be a possible end node after `n_steps`
+    - e.g. given 2 steps, all nodes adjacent to `S` are visited, but cannot be a landing step
+- all landing steps have the property of being able to reach `S` given exactly `n_steps`
+- perhaps we collect all nodes wihin `n_steps` first, then find a way to determine whether there is a path exactly `n_steps` from each node to `S`?
+
+### bfs vs dijkstra vs a*
+
+- a* is an extension of dijkstra's where it is goal-oriented
+- dijkstra treats every node as target, and so finds shortest path to all nodes
+- bfs is just a general traversal algorithm
+- since the problem is interested in multiple nodes, most of which not via the shortest path, maybe a* isn't the answer?
+- given the shortest path to every node, are we able to sieve through that for all nodes reachable within `n_steps`?
+
+### depth-first?
+
+If exactly `n_steps` is required, then let's leverage that.
+
+### implementation
+
+Taking a page from the crucible puzzle, it may be that each node should be ID'd not only by position, but by their lineage. This would allow the same node to be visited repeatedly as the path traverses through the garden. The problem mandates that each plot can be repeated traversed back and forth until steps run out.
+
+Or perhaps `visited` is not checked until `depth=limit`
+
+- However, `visited` must record nodes if `depth=limit`. Here, only `pos` matters. So perhaps lineage is not important; what's important is that we check `visited` for only the last `depth`
+- Example found 12 instead of 16; missing 8+2j, 8+4j, 5+5j (src), 6+6j
+- Algorithm needs to allow traversal to revisit nodes in `visited`; only check for `depth` before allowing another `dfs` call
+- Add `src` to plots
+
+### bfs and parity
+
+It seems that given shortest distance, `d`, to a plot, if `d` matches parity of `n_steps`, i.e. even or odd, it will be a reachable target at `n_steps`
+
+Then, use bfs to find shortest paths for all nodes and check for parity, while checking for depth. This great reduces the amount of traversal needed since we no longer wander aimlessly until step count is met
+
+### part 2 - infinite gardens
+
+- the input garden now infinitely repeats in every direction
+- new step count is north of 26 million
+- insights from input data inspection
+    - both the row and column of `S` is completely open
+    - the sparsity returns a rhombus shape in our part 1 solution
+    - the rombus must then be bounded by number of steps
