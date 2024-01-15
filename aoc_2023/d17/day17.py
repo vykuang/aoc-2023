@@ -5,7 +5,6 @@ import logging
 import sys
 from dataclasses import dataclass
 from collections import defaultdict, deque
-from itertools import groupby
 from math import inf
 from time import time_ns
 
@@ -18,12 +17,6 @@ def read_line(fpath: str):
     fpath = Path(fpath)
     with open(fpath) as f:
         yield from f
-
-
-def all_equal(iterable):
-    "Returns True if all the elements are equal to each other."
-    g = groupby(iterable)
-    return next(g, True) and not next(g, False)
 
 
 @dataclass
@@ -75,7 +68,27 @@ class Node:
 def heat_loss_dijkstra(
     grid, src=0 + 0j, min_blocks: int = 0, max_blocks: int = 3, part_two: bool = False
 ):
-    """ """
+    """
+    Given weighted 2d grid, find the path with minimal heat loss using
+    dijkstra
+
+    Params
+    ------
+    grid: list[str]
+        2d array of heat loss
+    src: complex
+        uses imag plane to denote rows; real for columns
+    min_blocks: int >= 0
+        minimum number of nodes moved per direction after turning
+    max_blocks: int >= 1
+        max number of nodes moved per direction before turning
+
+    Returns
+    -------
+    loss: int
+        heat loss of the optimized path
+    """
+
     ncols = len(grid[0])
     nrows = len(grid)
     logger.info(f"grid size: {nrows} x {ncols}")
@@ -87,8 +100,8 @@ def heat_loss_dijkstra(
     # init all prev to None
     prev = defaultdict(lambda: None)
     visited = set()
+    # target @ bottom right corner
     target = ncols - 1 + (nrows - 1) * 1j
-    # to_check = [col + row * 1j for row in range(nrows) for col in range(ncols)]
     to_check = [src]
     dirs = [-1 + 0j, 1 + 0j, 1j, -1j]
     while to_check:
@@ -178,7 +191,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
-    grid = [line.strip() for line in read_line(fp)]
+    grid_rows = [line.strip() for line in read_line(fp)]
+    grid = [[int(ch) for ch in line] for line in grid_rows]
     # execute
     tstart = time_ns()
     if part_two:
