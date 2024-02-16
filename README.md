@@ -494,7 +494,20 @@ each empty is actually one million times larger instead of just double. Easy mod
 
 ### part 2 - unfolding
 
-ok.
+ok. Let's get the unfolding right first
+
+- copy the springs 4 more times, separated by `?`
+    - use `'?'.join()`
+- copy the groups 4 more times, sep by `,`
+    - `grps *= 5`
+
+### dynamic programming?
+
+State:
+
+- arrangement constraint (cols)
+- required contiguous groups (rows)
+- each cell value is number of possible arrangements
 
 ## day 13 - reflections and more `.` and `#`
 

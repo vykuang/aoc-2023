@@ -75,6 +75,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
     for line in read_line(fp):
         springs, grps = line.split()
         grps = [int(n) for n in grps.split(",")]
+        if part_two:
+            springs = "?".join([springs for _ in range(5)])
+            grps *= 5
         logger.debug(f"springs: {springs}\tgroups: {grps}")
 
         all_arrng = find_arrangements(springs)
