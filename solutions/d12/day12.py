@@ -74,9 +74,11 @@ def main(sample: bool, part_two: bool, loglevel: str):
     num_arrngs = []
     for line in read_line(fp):
         springs, grps = line.split()
+        # remove extraneous '.' to prune states
+        springs = '.'.join([sp for sp in springs.split('.') if sp])
         grps = [int(n) for n in grps.split(",")]
         if part_two:
-            springs = "?".join([springs for _ in range(5)])
+            springs = "?".join(springs for _ in range(5))
             grps *= 5
         logger.debug(f"springs: {springs}\tgroups: {grps}")
 

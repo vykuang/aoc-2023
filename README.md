@@ -501,6 +501,8 @@ ok. Let's get the unfolding right first
 - copy the groups 4 more times, sep by `,`
     - `grps *= 5`
 
+useful trick - combine contiguous groups of `.` into single `.` to reduce state space
+
 ### dynamic programming?
 
 State:
@@ -509,6 +511,7 @@ State:
 - required contiguous groups (rows)
 - each cell value is number of possible arrangements
 
+With DP, if we record the number of states for some given configuration, any new config we encounter can be counted by looking at the states we've already counted, since we calculate them from the end; the suffix of any new config has already been counted.
 ## day 13 - reflections and more `.` and `#`
 
 Find the point of reflection in each pattern; patterns are 2D arrays separated by newlines.
