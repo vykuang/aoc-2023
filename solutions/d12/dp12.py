@@ -3,7 +3,6 @@ from pathlib import Path
 import argparse
 import logging
 import sys
-from collections import Counter
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -37,14 +36,14 @@ def main(sample: bool, part_two: bool, loglevel: str):
     for line in read_line(fp):
         springs, grps = line.split()
         # remove extraneous '.'
-        springs = '.'.join(sp for sp in springs.split('.') if sp)
+        springs = ".".join(sp for sp in springs.split(".") if sp)
         grps = [int(n) for n in grps.split(",")]
         if part_two:
             springs = "?".join([springs for _ in range(5)])
             grps *= 5
         logger.debug(f"springs: {springs}\tgroups: {grps}")
 
-        num_arrngs + = count_arrng(springs, grps)
+        num_arrngs += count_arrng(springs, grps)
         logger.debug(f"total: {num_arrngs}")
 
     logger.info(f"{sum(num_arrngs)}")

@@ -501,7 +501,7 @@ ok. Let's get the unfolding right first
 - copy the groups 4 more times, sep by `,`
     - `grps *= 5`
 
-useful trick - combine contiguous groups of `.` into single `.` to reduce state space
+useful trick - combine contiguous groups of `.` into single `.` to reduce state space; must expand *before combining the `.`*
 
 ### dynamic programming?
 
@@ -512,6 +512,30 @@ State:
 - each cell value is number of possible arrangements
 
 With DP, if we record the number of states for some given configuration, any new config we encounter can be counted by looking at the states we've already counted, since we calculate them from the end; the suffix of any new config has already been counted.
+
+### recursion and memoization
+
+In the same vein, by reframing the problem as the summation of smaller subproblems that can be solved the same way, recursion (and memoization, aka `@cache`) can be leveraged. In this context, the key would be `(springs, groups)`
+
+At each point of `springs`, we have 3 options: working, broken, or unknown
+
+- working: move
+
+### insights
+
+Python's `case/match` cannot compare the `match` value vs constants stored in variables; keep using `if/else`
+
+```py
+a = 1; b = 2
+c = input()
+match c:
+    case a:
+        # does our input == `a`?
+        print('Irrefutable pattern is allowed only for the last case statement')
+```
+
+python implements *pattern matching* and in this case, *variable capture*, and tries to assign the value of `match` into `case`; since we put no condition, it is *irrefutable*, and can only be used as the last case
+
 ## day 13 - reflections and more `.` and `#`
 
 Find the point of reflection in each pattern; patterns are 2D arrays separated by newlines.
