@@ -513,13 +513,25 @@ State:
 
 With DP, if we record the number of states for some given configuration, any new config we encounter can be counted by looking at the states we've already counted, since we calculate them from the end; the suffix of any new config has already been counted.
 
+e.g. if we know number of arrangements for `(.#:_) (2, :_)`, we can find `n_arr` for a longer record like `(###..#:_) (3, 2, :_)` by finding the new prefix `(###.) (3)`. Build from suffixes
+
 ### recursion and memoization
 
 In the same vein, by reframing the problem as the summation of smaller subproblems that can be solved the same way, recursion (and memoization, aka `@cache`) can be leveraged. In this context, the key would be `(springs, groups)`
 
 At each point of `springs`, we have 3 options: working, broken, or unknown
 
-- working: move
+- working: move to next, no change to group
+- broken: where all the interesting stuff needs to happen
+    - take `nx_group`
+    - can `springs[:nx_group]` be set to broken? i.e. only `?` and `#`?
+    - is it the last group?
+    - is it the last spring?
+    - some can only have one valid arrng; return 1
+    - for ones that continue, recurse
+    - otherwise, return 0
+- unknown: return both
+- memo results before returning, using `(springs, groups)` as hash key
 
 ### insights
 

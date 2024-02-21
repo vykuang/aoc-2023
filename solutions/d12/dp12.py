@@ -35,12 +35,12 @@ def main(sample: bool, part_two: bool, loglevel: str):
     num_arrngs = 0
     for line in read_line(fp):
         springs, grps = line.split()
-        # remove extraneous '.'
-        springs = ".".join(sp for sp in springs.split(".") if sp)
         grps = [int(n) for n in grps.split(",")]
         if part_two:
             springs = "?".join([springs for _ in range(5)])
             grps *= 5
+        # remove extraneous '.'
+        springs = ".".join(sp for sp in springs.split(".") if sp)
         logger.debug(f"springs: {springs}\tgroups: {grps}")
 
         num_arrngs += count_arrng(springs, grps)
