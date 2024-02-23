@@ -30,9 +30,6 @@ def count_broken(springs, grps, cache, working=".", broken="#", unknown="?") -> 
     if working in brokens:
         # prune; invalid
         return 0
-    # if not springs[nx_grp:] and len(grps) > 1:
-    #     # no more springs after current group, but groups still exist
-    #     return 0
     if len(springs) == nx_grp:
         # remaining springs = num specified in next group
         if len(grps) == 1:
