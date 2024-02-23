@@ -515,6 +515,17 @@ With DP, if we record the number of states for some given configuration, any new
 
 e.g. if we know number of arrangements for `(.#:_) (2, :_)`, we can find `n_arr` for a longer record like `(###..#:_) (3, 2, :_)` by finding the new prefix `(###.) (3)`. Build from suffixes
 
+#### trips
+
+```none
+?#?????#??? 2,1,1
+???????..??#?. 3,1
+???????#?????#..?? 5,2
+....#?##????.??#?? 4,1
+```
+
+The above share a common pattern of `#` surrounded by `?`, separated by `.`. The presence of `#` locks in the groups in a way not accounted for in my current state relation. Only way I see it through is adding a helper func that determines whether the entire set of springs is compatible with current set of groups
+
 ### recursion and memoization
 
 In the same vein, by reframing the problem as the summation of smaller subproblems that can be solved the same way, recursion (and memoization, aka `@cache`) can be leveraged. In this context, the key would be `(springs, groups)`
