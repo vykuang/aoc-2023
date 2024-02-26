@@ -585,7 +585,26 @@ def transpose(pattern: list[str]) -> list[str]:
 
 Find the `.` or `#` that when flipped, produces a *different* reflection line. This means that instead of checking each pattern once, we're checking it for potentially as many nodes per pattern
 
+Given a runtime of 1 ms for part 1, perhaps it is feasible to brute force this as well?
+
+### brute-force smudges
+
+1. add a nested for-loop for each row/col
+1. construct a new row, since `str` is immutable
+1. must compare vs original mirror line
+1. original reflection line *may still be valid*
+    - it is not enough to ignore and try again because it may be very durable against changes throughout the pattern, esp if it's between the first and second row/col;
+    - changes to any other row/col will not affect that initial line
+    - the comparison logic needs to be inside the reflection search, not in the wrapper for loop
+
+### bitmasking
+
+Since we're looking for a new mirror line after changing *exactly one* character, we can search for pairs of lines with only one different character
+
+Try `XOR` and looking for adjacent pairs with only 1 bit difference
+
 ## day 14 - total load
+
 
 More 2D arrays.
 
