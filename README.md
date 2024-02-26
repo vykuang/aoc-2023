@@ -601,7 +601,7 @@ Given a runtime of 1 ms for part 1, perhaps it is feasible to brute force this a
 
 Since we're looking for a new mirror line after changing *exactly one* character, we can search for pairs of lines with only one different character
 
-Try `XOR` and looking for adjacent pairs with only 1 bit difference
+Try `XOR` and looking for adjacent pairs with only 1 bit difference. One way is to see whether the quotient is exactly a power of two
 
 ## day 14 - total load
 
