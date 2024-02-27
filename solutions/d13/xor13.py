@@ -21,17 +21,41 @@ def bit_convert(pattern):
     Convert "...##.#" patterns into 0s and 1s
     Each pattern becomes a matrix of bits
     """
+    logger.debug(f"pattern:\n{pattern}")
     pattern = pattern.replace(".", "0").replace("#", "1")
-    return [[int(bit) for bit in line] for line in pattern.split("\n")]
+    return [[bit for bit in line] for line in pattern.split("\n") if line]
 
 
-def find_reflection(pattern: list[str], ndiff=0) -> int:
+def find_reflection(pattern: list[str], diff_lim=0) -> int:
     """
-    Given a bit matrix, compare adjacent rows until one with
-    ndiff differences is found
+    Given a bit matrix, compare rows from the reflection line until
+    diff_lim differences are found, and one or both ends is reached
+    if diff_lim = 0, we're looking for perfect reflections
+    if diff_lim = 1, we're looking for reflections with 1 smudge
     """
+    logger.debug(f"first row:{pattern[0]}")
+    bmat = [int("".join(p), base=2) for p in pattern]
+    prev = bmat[0]
+    for i, row in enumerate(bmat[1:], start=1):
+        # initialize the new counters for each row comparison
+        diff = 0
+        above = i - 1
+        below = i
+        while diff <= diff_lim:
+            if above < 0 or below >= len(bmat):
+                # reach the end
+                break
+            # equiv to bin(num).count('1')
+            diff += (bmat[above] ^ bmat[below]).bit_count()
+            above -= 1
+            below += 1
 
-    return n_row
+            # check until ends; current check b/w i-1 and i
+            # + 1 accounts for us starting from 1st row instead of 0th
+            # e.g. at i = 1, we're actually at the 2nd row of matrix
+        if diff == diff_lim:
+            # ensures we're not _under_ our req
+            return i
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -48,19 +72,22 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # execute
     tstart = time_ns()
+    ndiff = 1 if part_two else 0
     rows = cols = 0
     for p in patterns:
-        r_ref = c_ref = None
+        # r_ref = c_ref = None
         logger.debug(f"pattern:\n{p}")
         logger.debug(f"len: {len(p)}\tfirst row: {p[0]}")
-        if r_ref := find_reflection(p):
+        if r_ref := find_reflection(p, ndiff):
             logger.debug(f"ref row found: {r_ref}")
             # if found, no need to look for vertical
+            rows += r_ref
         else:
             p_transposed = [*zip(*p)]
             logger.debug(f"transposed:\n{p_transposed}")
-            if c_ref := find_reflection(p_transposed):
+            if c_ref := find_reflection(p_transposed, ndiff):
                 logger.debug(f"ref col found: {c_ref}")
+                cols += c_ref
     # output
     logger.info(f"total: {cols + 100 * rows}")
 
