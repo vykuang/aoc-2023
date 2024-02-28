@@ -1130,4 +1130,17 @@ Then, use bfs to find shortest paths for all nodes and check for parity, while c
 - insights from input data inspection
     - both the row and column of `S` is completely open
     - the sparsity returns a rhombus shape in our part 1 solution
-    - the rombus must then be bounded by number of steps
+    - the rombus must then be bounded by number of steps; what does that tell me? and how does that fit into cycle detection, which is no doubt required given the absurdly high step count?
+    - base input is 131 x 131 - a cube
+- drawing how the rhombus is overlaid atop the map tiling gives these insight
+    - most of the map is completely filled
+    - `n % 131` happens to be 65 - middle of the cube
+    - edge cases:
+        - 4 corners
+        - diagonal boundaries - 2 types for each of the 4 diagonal
+        - first map
+    - non edge cases
+        - completely filled map x 4 entry points
+        - because side length = 131, when traversing a straight beeline through all the maps the parity of entrypoint flips
+        - this means for each of the 4 cases above, there is another doubling for when entrypoint is even or odd
+    - how do I leverage part one to calculate these cases?

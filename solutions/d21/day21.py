@@ -96,7 +96,8 @@ def main(sample: bool, part_two: bool, loglevel: str, plot=".", rock="#", start=
         n_steps = 64
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
-
+    if part_two:
+        n_steps = 26501365
     # read input
     grid = [line.strip() for line in read_line(fp)]
     plots = set(
@@ -130,7 +131,7 @@ def main(sample: bool, part_two: bool, loglevel: str, plot=".", rock="#", start=
     # output
     visited = targets
     logger.debug(f"visited:\n{visited}")
-    logger.info(f"num nodes: {len(visited)}")
+    logger.info(f"reachable node count: {len(visited)}")
     # for row in range(len(grid)):
     #     line = ''
     #     for col in range(len(grid[0])):
